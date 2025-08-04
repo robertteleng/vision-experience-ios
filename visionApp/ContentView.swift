@@ -1,15 +1,26 @@
+//
+//  ContentView.swift
+//  visionApp
+//
+//  Main user interface logic, state management and navigation for the app.
+//  Implements MVVM principles: views are separated, state is handled by NavigationViewModel.
+//  Includes voice command processing and basic AR/Camera simulation.
+//
+
 import SwiftUI
 import AVFoundation
 import Speech
 
+// MARK: - Main Entry Point and App Navigation
+
 struct ContentView: View {
     @StateObject private var navigationViewModel = NavigationViewModel()
-    @State private var showCardboard = false
     @State private var isCardboardMode = false
 
     var body: some View {
         NavigationView {
             VStack {
+                // Render the main screens based on the navigation state
                 switch navigationViewModel.currentView {
                 case .splash:
                     SplashView(navigationViewModel: navigationViewModel)
@@ -19,6 +30,7 @@ struct ContentView: View {
                     CameraView(navigationViewModel: navigationViewModel)
                 }
 
+                // Show the Cardboard button only in the illness list screen
                 if navigationViewModel.currentView != .camera && navigationViewModel.currentView != .splash {
                     Button(action: {
                         isCardboardMode.toggle()
@@ -43,14 +55,19 @@ struct ContentView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
+            // Request speech recognition authorization when the app launches
             navigationViewModel.setupSpeech()
         }
     }
 }
 
+// MARK: - Navigation Screens Enumeration
+
 enum AppScreen {
     case splash, illnessList, camera
 }
+
+// MARK: - Central Navigation and State ViewModel
 
 class NavigationViewModel: ObservableObject {
     @Published var currentView: AppScreen = .splash
@@ -58,11 +75,13 @@ class NavigationViewModel: ObservableObject {
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
 
+    // Speech recognition dependencies
     private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
 
+    // Request permission for speech recognition
     func setupSpeech() {
         SFSpeechRecognizer.requestAuthorization { authStatus in
             if authStatus != .authorized {
@@ -71,10 +90,22 @@ class NavigationViewModel: ObservableObject {
         }
     }
 
+    // Start processing voice commands
     func startVoiceRecognition() {
         try? startRecording()
     }
 
+    // Stop processing voice commands
+    func stopVoiceRecognition() {
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        recognitionRequest?.endAudio()
+        recognitionRequest = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+    }
+
+    // Begin recording and interpret recognized voice commands
     private func startRecording() throws {
         recognitionTask?.cancel()
         self.recognitionTask = nil
@@ -87,12 +118,13 @@ class NavigationViewModel: ObservableObject {
         let inputNode = audioEngine.inputNode
 
         guard let recognitionRequest = recognitionRequest else { return }
-
         recognitionRequest.shouldReportPartialResults = true
 
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { result, error in
             if let result = result {
                 let command = result.bestTranscription.formattedString.lowercased()
+
+                // Navigation and illness selection voice commands
                 if command.contains("cataracts") {
                     self.selectedIllness = "Cataracts"
                     self.currentView = .camera
@@ -109,6 +141,8 @@ class NavigationViewModel: ObservableObject {
                     self.speak("Macular Degeneration filter activated")
                     return
                 }
+
+                // Additional navigation commands
                 if command.contains("list") {
                     self.currentView = .illnessList
                 } else if command.contains("camera") {
@@ -121,8 +155,7 @@ class NavigationViewModel: ObservableObject {
                         self.currentView = .illnessList
                     case .illnessList:
                         self.currentView = .splash
-                    default:
-                        break
+                    default: break
                     }
                 } else if command.contains("next") {
                     switch self.currentView {
@@ -130,16 +163,21 @@ class NavigationViewModel: ObservableObject {
                         self.currentView = .illnessList
                     case .illnessList:
                         self.currentView = .camera
-                    default:
-                        break
+                    default: break
                     }
-                } else if command.contains("enable filter") {
+                }
+
+                // Filter control voice commands
+                else if command.contains("enable filter") {
                     self.filterEnabled = true
                     self.speak("Filter enabled")
                 } else if command.contains("disable filter") {
                     self.filterEnabled = false
                     self.speak("Filter disabled")
-                } else if command.contains("increase severity") {
+                }
+
+                // Filter severity/central focus control
+                else if command.contains("increase severity") {
                     self.centralFocus = min(self.centralFocus + 0.1, 1.0)
                     self.speak("Severity increased")
                 } else if command.contains("decrease severity") {
@@ -148,6 +186,7 @@ class NavigationViewModel: ObservableObject {
                 }
             }
 
+            // End recognition session if necessary
             if error != nil || (result?.isFinal ?? false) {
                 self.audioEngine.stop()
                 inputNode.removeTap(onBus: 0)
@@ -156,6 +195,7 @@ class NavigationViewModel: ObservableObject {
             }
         }
 
+        // Install audio tap to capture live microphone input
         inputNode.removeTap(onBus: 0)
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
@@ -166,15 +206,7 @@ class NavigationViewModel: ObservableObject {
         try audioEngine.start()
     }
 
-    func stopVoiceRecognition() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        recognitionRequest = nil
-        recognitionTask?.cancel()
-        recognitionTask = nil
-    }
-    
+    // Speak a message aloud for accessibility/confirmation
     private func speak(_ message: String) {
         let utterance = AVSpeechUtterance(string: message)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
@@ -183,34 +215,35 @@ class NavigationViewModel: ObservableObject {
     }
 }
 
-import SwiftUI
+// MARK: - Splash Screen with Lottie Animation and Logo
 
 struct SplashView: View {
     var navigationViewModel: NavigationViewModel
     @State private var animate = false
 
     var body: some View {
-        
         ZStack {
             VStack {
                 Spacer()
-                // Animación centrada verticalmente
+                // Lottie animation centered on the screen
                 LottieView(animationName: "eyeAnimation", loopMode: .loop)
                     .frame(width: 200, height: 200)
                     .opacity(animate ? 1 : 0)
                     .animation(.easeIn(duration: 1.0), value: animate)
-                
+
                 Spacer()
-                
-                
-                // Logo en la parte inferior centrado
-                Image("logo", bundle: .main)
-                    .resizable()
-                    .renderingMode(.template)
-                    .frame(width: 80, height: 80)
-                    .opacity(0.8)
-                    .padding(.bottom, 30)
-                
+
+                // Logo centered at the bottom (should exist in bundle)
+                if let path = Bundle.main.path(forResource: "logo", ofType: "png"),
+                   let uiImage = UIImage(contentsOfFile: path) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .renderingMode(.template)
+                        .foregroundColor(.white)
+                        .frame(width: 80, height: 80)
+                        .opacity(0.8)
+                        .padding(.bottom, 30)
+                }
             }
         }
         .onAppear {
@@ -223,14 +256,15 @@ struct SplashView: View {
     }
 }
 
+// MARK: - List of Illnesses with Back Navigation
+
 struct IllnessListView: View {
     var navigationViewModel: NavigationViewModel
-
     let illnesses = ["Cataracts", "Glaucoma", "Macular Degeneration"]
 
     var body: some View {
         VStack {
-            // Back button at the top-left
+            // Manual back button at the top-left
             HStack {
                 Button(action: {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -244,8 +278,7 @@ struct IllnessListView: View {
                 }
                 Spacer()
             }
-
-            // Illness list
+            // List of illnesses, tap to go to camera view with corresponding filter
             List(illnesses, id: \.self) { illness in
                 Button(action: {
                     navigationViewModel.selectedIllness = illness
@@ -255,16 +288,11 @@ struct IllnessListView: View {
                 }
             }
             .navigationTitle("Illness List")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Camera") {
-                        navigationViewModel.currentView = .camera
-                    }
-                }
-            }
         }
     }
 }
+
+// MARK: - Camera Simulation View with Filter Controls
 
 struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
@@ -274,22 +302,21 @@ struct CameraView: View {
         ZStack {
             if isLandscape {
                 VStack {
+                    // Camera title and selected illness display
                     Text("Camera View")
                         .font(.title)
-
                     if let illness = navigationViewModel.selectedIllness {
                         Text("Selected: \(illness)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-
                     Spacer()
 
+                    // Camera preview (placeholder rectangle) with optional filter overlay
                     ZStack {
                         Rectangle()
                             .fill(Color.gray)
                             .frame(height: 300)
-
                         if navigationViewModel.filterEnabled, let illness = navigationViewModel.selectedIllness {
                             ColorOverlay(illness: illness, centralFocus: navigationViewModel.centralFocus)
                                 .frame(height: 300)
@@ -298,12 +325,10 @@ struct CameraView: View {
                         }
                     }
 
+                    // Central vision severity slider and UI icons
                     VStack {
-                        // Slider para ajustar visión central
                         Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
                             .padding()
-
-                        // Iconos semitransparentes
                         HStack(spacing: 30) {
                             Image(systemName: "eye")
                             Image(systemName: "exclamationmark.circle")
@@ -313,11 +338,10 @@ struct CameraView: View {
                         .foregroundColor(.white.opacity(0.3))
                         .padding(.bottom)
                     }
-
                     Spacer()
 
+                    // Floating control bar: enable/disable filter and back button
                     HStack(spacing: 30) {
-                        // Botón de filtro
                         Button(action: {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             navigationViewModel.filterEnabled.toggle()
@@ -327,8 +351,6 @@ struct CameraView: View {
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(navigationViewModel.filterEnabled ? .red : .green)
                         }
-
-                        // Botón de retroceso
                         Button(action: {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             navigationViewModel.currentView = .illnessList
@@ -346,6 +368,7 @@ struct CameraView: View {
                 }
                 .padding()
             } else {
+                // If not in landscape, show a prompt to rotate the device
                 VStack {
                     Spacer()
                     Image(systemName: "iphone.landscape")
@@ -360,6 +383,7 @@ struct CameraView: View {
                 }
             }
         }
+        // Listen to device orientation changes and update layout
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             let orientation = UIDevice.current.orientation
             if orientation.isValidInterfaceOrientation {
@@ -369,10 +393,13 @@ struct CameraView: View {
     }
 }
 
+// MARK: - Visual Filter Overlay for Each Illness
+
 struct ColorOverlay: View {
     let illness: String
     var centralFocus: Double = 0.5
 
+    // Compute overlay color/gradient based on selected illness
     var overlayColor: Color {
         switch illness.lowercased() {
         case "cataracts":
@@ -387,6 +414,7 @@ struct ColorOverlay: View {
     }
 
     var body: some View {
+        // Special radial effect for glaucoma, solid overlay for others
         if illness.lowercased() == "glaucoma" {
             RadialGradient(
                 gradient: Gradient(colors: [.black.opacity(0.8), .clear]),
@@ -403,19 +431,19 @@ struct ColorOverlay: View {
     }
 }
 
+// MARK: - Lottie Animation Wrapper for Splash Screen
 
-import SwiftUI
 import Lottie
 
 struct LottieView: UIViewRepresentable {
     let animationName: String
     let loopMode: LottieLoopMode
-
     let animationView = LottieAnimationView()
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
 
+        // Load and configure the Lottie animation
         animationView.animation = LottieAnimation.named(animationName)
         animationView.contentMode = .scaleAspectFit
         animationView.loopMode = loopMode
