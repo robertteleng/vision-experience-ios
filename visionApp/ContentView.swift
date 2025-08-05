@@ -61,15 +61,15 @@ struct ContentView: View {
                 isLandscape = orientation.isLandscape
             }
         }
-        .onChange(of: isLandscape) { newValue in
-            if isCardboardMode && newValue {
+        .onChange(of: isLandscape) {
+            if isCardboardMode && isLandscape {
                 navigationViewModel.startVoiceRecognition()
-            } else if isCardboardMode && !newValue {
+            } else if isCardboardMode && !isLandscape {
                 navigationViewModel.stopVoiceRecognition()
             }
         }
-        .onChange(of: isCardboardMode) { newValue in
-            if newValue {
+        .onChange(of: isCardboardMode) {
+            if isCardboardMode {
                 if isLandscape {
                     navigationViewModel.startVoiceRecognition()
                 }
@@ -279,22 +279,19 @@ struct SplashView: View {
 
 struct IllnessListView: View {
     var navigationViewModel: NavigationViewModel
-    let illnesses = ["Cataracts", "Glaucoma", "Macular Degeneration"]
+
+    let illnesses: [(name: String, icon: String)] = [
+        ("Cataracts", "eye"),
+        ("Glaucoma", "eye.trianglebadge.exclamationmark"),
+        ("Macular Degeneration", "circle.dashed.inset.filled")
+    ]
 
     var body: some View {
         VStack {
             Spacer()
-            
-            let illnesses: [(name: String, icon: String)] = [
-                ("Cataracts", "eye"),
-                ("Glaucoma", "eye.trianglebadge.exclamationmark"),
-                ("Macular Degeneration", "circle.dashed.inset.filled")
-                // Elige el SF Symbol o un asset personalizado que más te guste
-            ]
-
-            VStack(spacing: 24) {
+            VStack(spacing: 28) {
                 ForEach(illnesses, id: \.name) { illness in
-                    IllnessButton(title: illness.name, iconName: illness.icon) {
+                    FloatingGlassButton(title: illness.name, iconName: illness.icon) {
                         navigationViewModel.selectedIllness = illness.name
                         navigationViewModel.currentView = .camera
                     }
@@ -450,3 +447,4 @@ struct LottieView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
+
