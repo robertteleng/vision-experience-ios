@@ -263,112 +263,47 @@ struct IllnessListView: View {
     let illnesses = ["Cataracts", "Glaucoma", "Macular Degeneration"]
 
     var body: some View {
-        VStack {
-            // Manual back button at the top-left
-            HStack {
-                Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    navigationViewModel.currentView = .splash
-                }) {
-                    Image(systemName: "arrow.left.circle.fill")
-                        .resizable()
-                        .frame(width: 30, height: 30)
-                        .foregroundColor(.blue)
-                        .padding()
-                }
-                Spacer()
+        // List of illnesses, tap to go to camera view with corresponding filter
+        List(illnesses, id: \.self) { illness in
+            Button(action: {
+                navigationViewModel.selectedIllness = illness
+                navigationViewModel.currentView = .camera
+            }) {
+                Text(illness)
             }
-            // List of illnesses, tap to go to camera view with corresponding filter
-            List(illnesses, id: \.self) { illness in
-                Button(action: {
-                    navigationViewModel.selectedIllness = illness
-                    navigationViewModel.currentView = .camera
-                }) {
-                    Text(illness)
-                }
-            }
-            .navigationTitle("Illness List")
         }
+        .navigationTitle("Illness List")
     }
 }
 
 // MARK: - Camera Simulation View with Filter Controls
-
 struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
     @State private var isLandscape = UIDevice.current.orientation.isLandscape
+    @StateObject private var cameraService = CameraService()
 
     var body: some View {
         ZStack {
             if isLandscape {
+                // SOLO muestra cámara y controles en horizontal
+                CameraPreviewView(session: cameraService.session)
+                    .ignoresSafeArea()
+                // Overlays y controles...
                 VStack {
-                    // Camera title and selected illness display
-                    Text("Camera View")
-                        .font(.title)
-                    if let illness = navigationViewModel.selectedIllness {
-                        Text("Selected: \(illness)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
                     Spacer()
-
-                    // Camera preview (placeholder rectangle) with optional filter overlay
-                    ZStack {
-                        Rectangle()
-                            .fill(Color.gray)
-                            .frame(height: 300)
-                        if navigationViewModel.filterEnabled, let illness = navigationViewModel.selectedIllness {
-                            ColorOverlay(illness: illness, centralFocus: navigationViewModel.centralFocus)
-                                .frame(height: 300)
-                                .transition(.opacity)
-                                .animation(.easeInOut(duration: 0.3), value: illness)
-                        }
+                    Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
+                        .padding(.horizontal, 40)
+                    HStack(spacing: 40) {
+                        Image(systemName: "eye")
+                        Image(systemName: "exclamationmark.circle")
+                        Image(systemName: "gearshape")
                     }
-
-                    // Central vision severity slider and UI icons
-                    VStack {
-                        Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
-                            .padding()
-                        HStack(spacing: 30) {
-                            Image(systemName: "eye")
-                            Image(systemName: "exclamationmark.circle")
-                            Image(systemName: "gearshape")
-                        }
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.3))
-                        .padding(.bottom)
-                    }
-                    Spacer()
-
-                    // Floating control bar: enable/disable filter and back button
-                    HStack(spacing: 30) {
-                        Button(action: {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            navigationViewModel.filterEnabled.toggle()
-                        }) {
-                            Image(systemName: navigationViewModel.filterEnabled ? "eye.slash.circle.fill" : "eye.circle.fill")
-                                .resizable()
-                                .frame(width: 40, height: 40)
-                                .foregroundColor(navigationViewModel.filterEnabled ? .red : .green)
-                        }
-                        Button(action: {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            navigationViewModel.currentView = .illnessList
-                        }) {
-                            Image(systemName: "arrow.left.circle.fill")
-                                .resizable()
-                                .frame(width: 40, height: 40)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .padding(.bottom)
+                    .font(.title2)
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.bottom, 40)
                 }
-                .padding()
             } else {
-                // If not in landscape, show a prompt to rotate the device
+                // Aviso de girar el dispositivo y botón de back
                 VStack {
                     Spacer()
                     Image(systemName: "iphone.landscape")
@@ -379,11 +314,28 @@ struct CameraView: View {
                     Text("Please rotate your device")
                         .font(.title2)
                         .padding()
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        navigationViewModel.currentView = .illnessList
+                    }) {
+                        Image(systemName: "chevron.left.circle")
+                            .resizable()
+                            .frame(width: 38, height: 38)
+                            .foregroundColor(.blue)
+                            .opacity(0.7)
+                            .padding(.top, 8)
+                    }
                     Spacer()
                 }
+                .background(Color.black.opacity(0.8).ignoresSafeArea())
             }
         }
-        // Listen to device orientation changes and update layout
+        .onAppear {
+            cameraService.startSession()
+        }
+        .onDisappear {
+            cameraService.stopSession()
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             let orientation = UIDevice.current.orientation
             if orientation.isValidInterfaceOrientation {
