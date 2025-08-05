@@ -319,20 +319,10 @@ struct CameraView: View {
                     // SOLO muestra cámara y controles en horizontal
                     CameraPreviewView(session: cameraService.session)
                         .ignoresSafeArea()
+                    
+                    FloatingMenu(navigationViewModel: navigationViewModel)
                     // Overlays y controles...
-                    VStack {
-                        Spacer()
-                        Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
-                            .padding(.horizontal, 40)
-                        HStack(spacing: 40) {
-                            Image(systemName: "eye")
-                            Image(systemName: "exclamationmark.circle")
-                            Image(systemName: "gearshape")
-                        }
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 40)
-                    }
+                
                 } else {
                     // Pantalla de orientación perfectamente centrada
                     VStack {
