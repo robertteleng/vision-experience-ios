@@ -45,10 +45,9 @@ struct FloatingMenu: View {
                 )
             }
         }
-        .padding(.leading, 25)
-        .padding(.bottom, 25)
+        .padding(.leading, 12)
+        .padding(.bottom, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-        .ignoresSafeArea(edges: [.bottom, .leading])
     }
 }
 

@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-// MARK: - Camera Simulation View with Filter Controls
+// --- CameraView.swift ---
+
 struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
     @StateObject private var cameraService = CameraService()
@@ -19,28 +20,39 @@ struct CameraView: View {
             let isLandscape = geometry.size.width > geometry.size.height
             ZStack {
                 if isLandscape {
-                    // Vista de cámara a pantalla completa
+                    // Cámara a pantalla completa
                     CameraPreviewView(session: cameraService.session)
                         .ignoresSafeArea()
-                    
-                    // Menú flotante en la esquina inferior izquierda
-                    FloatingMenu(navigationViewModel: navigationViewModel, expanded: $menuExpanded)
 
-                    // Slider centrado en la parte inferior, solo cuando el menú está expandido
+                    // Menú flotante en la esquina inferior izquierda
+                    VStack {
+                        Spacer()
+                        FloatingMenu(navigationViewModel: navigationViewModel, expanded: $menuExpanded)
+                            .padding(.leading, 12)
+                            .padding(.bottom, 12)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+
+                    // Slider alineado exactamente tras el menú
                     if menuExpanded {
                         VStack {
                             Spacer()
-                            GlassSlider(
-                                value: $navigationViewModel.centralFocus,
-                                width: geometry.size.width * 0.75 // 75% del ancho de pantalla
-                            )
-                            .padding(.bottom, 36)
+                            HStack(spacing: 0) {
+                                // El ancho real del botón de menú flotante + padding izquierdo
+                                Spacer().frame(width: 68) // 56 icono + 12 padding
+                                GlassSlider(
+                                    value: $navigationViewModel.centralFocus,
+                                    width: geometry.size.width - 68 - 32 // 32pt margen derecho
+                                )
+                                .frame(height: 32)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .bottom)
+                            .padding(.bottom, 12)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .ignoresSafeArea(edges: [.bottom])
                     }
                 } else {
-                    // Vista para cuando el dispositivo NO está en landscape
+                    // Portrait: pantalla para girar el dispositivo
                     VStack {
                         Spacer()
                         Image(systemName: "iphone.landscape")
@@ -49,13 +61,11 @@ struct CameraView: View {
                             .frame(width: 100, height: 100)
                             .foregroundColor(.blue)
                             .padding(.bottom, 20)
-
                         Text("Please rotate your device")
                             .font(.title2)
                             .foregroundColor(.white)
                             .padding(.bottom, 20)
                             .multilineTextAlignment(.center)
-
                         Button(action: {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             navigationViewModel.currentView = .illnessList
@@ -74,7 +84,6 @@ struct CameraView: View {
                     .background(Color.black.ignoresSafeArea())
                 }
             }
-            // ACTUALIZA LA ORIENTACIÓN DE LA CÁMARA CADA VEZ QUE CAMBIA
             .onChange(of: orientationObserver.orientation) { newOrientation in
                 cameraService.updateVideoOrientation(deviceOrientation: newOrientation)
             }

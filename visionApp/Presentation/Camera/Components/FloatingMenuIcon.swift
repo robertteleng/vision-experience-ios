@@ -11,21 +11,8 @@ import SwiftUI
 struct FloatingMenuIcon: View {
     var systemName: String
     var isMenu: Bool = false
-    var action: (() -> Void)? = nil
 
     var body: some View {
-        Group {
-            if let action = action {
-                Button(action: action) {
-                    icon
-                }
-            } else {
-                icon
-            }
-        }
-    }
-
-    var icon: some View {
         Image(systemName: systemName)
             .font(.system(size: isMenu ? 32 : 26))
             .foregroundColor(.white)
