@@ -106,9 +106,8 @@ class CameraService: NSObject, ObservableObject {
                 self.session.commitConfiguration()
 
                 // Prepare previewLayer if using UIKit (for SwiftUI use UIViewRepresentable)
-                DispatchQueue.main.async {
-                    self.session.startRunning()
-                }
+                self.session.startRunning()
+                
             } catch {
                 DispatchQueue.main.async {
                     self.error = .configurationFailed

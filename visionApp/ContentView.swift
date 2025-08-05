@@ -16,6 +16,7 @@ import Speech
 struct ContentView: View {
     @StateObject private var navigationViewModel = NavigationViewModel()
     @State private var isCardboardMode = false
+    @State private var isLandscape = UIDevice.current.orientation.isLandscape
 
     var body: some View {
         NavigationView {
@@ -34,11 +35,7 @@ struct ContentView: View {
                 if navigationViewModel.currentView != .camera && navigationViewModel.currentView != .splash {
                     Button(action: {
                         isCardboardMode.toggle()
-                        if isCardboardMode {
-                            navigationViewModel.startVoiceRecognition()
-                        } else {
-                            navigationViewModel.stopVoiceRecognition()
-                        }
+                        // Voice recognition logic now handled in .onChange below
                     }) {
                         Image(systemName: "eyeglasses")
                             .resizable()
@@ -57,6 +54,28 @@ struct ContentView: View {
         .onAppear {
             // Request speech recognition authorization when the app launches
             navigationViewModel.setupSpeech()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            let orientation = UIDevice.current.orientation
+            if orientation.isValidInterfaceOrientation {
+                isLandscape = orientation.isLandscape
+            }
+        }
+        .onChange(of: isLandscape) { newValue in
+            if isCardboardMode && newValue {
+                navigationViewModel.startVoiceRecognition()
+            } else if isCardboardMode && !newValue {
+                navigationViewModel.stopVoiceRecognition()
+            }
+        }
+        .onChange(of: isCardboardMode) { newValue in
+            if newValue {
+                if isLandscape {
+                    navigationViewModel.startVoiceRecognition()
+                }
+            } else {
+                navigationViewModel.stopVoiceRecognition()
+            }
         }
     }
 }
@@ -263,71 +282,94 @@ struct IllnessListView: View {
     let illnesses = ["Cataracts", "Glaucoma", "Macular Degeneration"]
 
     var body: some View {
-        // List of illnesses, tap to go to camera view with corresponding filter
-        List(illnesses, id: \.self) { illness in
-            Button(action: {
-                navigationViewModel.selectedIllness = illness
-                navigationViewModel.currentView = .camera
-            }) {
-                Text(illness)
+        VStack {
+            Spacer()
+            
+            let illnesses: [(name: String, icon: String)] = [
+                ("Cataracts", "eye"),
+                ("Glaucoma", "eye.trianglebadge.exclamationmark"),
+                ("Macular Degeneration", "circle.dashed.inset.filled")
+                // Elige el SF Symbol o un asset personalizado que más te guste
+            ]
+
+            VStack(spacing: 24) {
+                ForEach(illnesses, id: \.name) { illness in
+                    IllnessButton(title: illness.name, iconName: illness.icon) {
+                        navigationViewModel.selectedIllness = illness.name
+                        navigationViewModel.currentView = .camera
+                    }
+                }
             }
+            .padding(.horizontal)
+            Spacer()
         }
-        .navigationTitle("Illness List")
+        .background(Color.black.ignoresSafeArea())
     }
 }
 
 // MARK: - Camera Simulation View with Filter Controls
 struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
-    @State private var isLandscape = UIDevice.current.orientation.isLandscape
     @StateObject private var cameraService = CameraService()
+    // isLandscape state and orientation detection moved to ContentView
 
     var body: some View {
-        ZStack {
-            if isLandscape {
-                // SOLO muestra cámara y controles en horizontal
-                CameraPreviewView(session: cameraService.session)
-                    .ignoresSafeArea()
-                // Overlays y controles...
-                VStack {
-                    Spacer()
-                    Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
-                        .padding(.horizontal, 40)
-                    HStack(spacing: 40) {
-                        Image(systemName: "eye")
-                        Image(systemName: "exclamationmark.circle")
-                        Image(systemName: "gearshape")
-                    }
-                    .font(.title2)
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.bottom, 40)
-                }
-            } else {
-                // Aviso de girar el dispositivo y botón de back
-                VStack {
-                    Spacer()
-                    Image(systemName: "iphone.landscape")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.blue)
-                    Text("Please rotate your device")
+        // Use the parent's orientation state via navigationViewModel, or pass as needed
+        GeometryReader { geometry in
+            let isLandscape = geometry.size.width > geometry.size.height
+            ZStack {
+                if isLandscape {
+                    // SOLO muestra cámara y controles en horizontal
+                    CameraPreviewView(session: cameraService.session)
+                        .ignoresSafeArea()
+                    // Overlays y controles...
+                    VStack {
+                        Spacer()
+                        Slider(value: $navigationViewModel.centralFocus, in: 0.1...1.0)
+                            .padding(.horizontal, 40)
+                        HStack(spacing: 40) {
+                            Image(systemName: "eye")
+                            Image(systemName: "exclamationmark.circle")
+                            Image(systemName: "gearshape")
+                        }
                         .font(.title2)
-                        .padding()
-                    Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        navigationViewModel.currentView = .illnessList
-                    }) {
-                        Image(systemName: "chevron.left.circle")
-                            .resizable()
-                            .frame(width: 38, height: 38)
-                            .foregroundColor(.blue)
-                            .opacity(0.7)
-                            .padding(.top, 8)
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.bottom, 40)
                     }
-                    Spacer()
+                } else {
+                    // Pantalla de orientación perfectamente centrada
+                    VStack {
+                        Spacer()
+                        Image(systemName: "iphone.landscape")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .foregroundColor(.blue)
+                            .padding(.bottom, 20)
+
+                        Text("Please rotate your device")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding(.bottom, 20)
+                            .multilineTextAlignment(.center)
+
+                        Button(action: {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            navigationViewModel.currentView = .illnessList
+                            navigationViewModel.stopVoiceRecognition()
+                        }) {
+                            Image(systemName: "chevron.left.circle")
+                                .resizable()
+                                .frame(width: 48, height: 48)
+                                .foregroundColor(.blue)
+                                .opacity(0.85)
+                                .padding()
+                        }
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.ignoresSafeArea())
                 }
-                .background(Color.black.opacity(0.8).ignoresSafeArea())
             }
         }
         .onAppear {
@@ -335,12 +377,6 @@ struct CameraView: View {
         }
         .onDisappear {
             cameraService.stopSession()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            let orientation = UIDevice.current.orientation
-            if orientation.isValidInterfaceOrientation {
-                isLandscape = orientation.isLandscape
-            }
         }
     }
 }
