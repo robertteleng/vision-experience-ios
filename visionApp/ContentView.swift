@@ -304,69 +304,7 @@ struct IllnessListView: View {
     }
 }
 
-// MARK: - Camera Simulation View with Filter Controls
-struct CameraView: View {
-    @ObservedObject var navigationViewModel: NavigationViewModel
-    @StateObject private var cameraService = CameraService()
-    // isLandscape state and orientation detection moved to ContentView
 
-    var body: some View {
-        // Use the parent's orientation state via navigationViewModel, or pass as needed
-        GeometryReader { geometry in
-            let isLandscape = geometry.size.width > geometry.size.height
-            ZStack {
-                if isLandscape {
-                    // SOLO muestra cámara y controles en horizontal
-                    CameraPreviewView(session: cameraService.session)
-                        .ignoresSafeArea()
-                    
-                    FloatingMenu(navigationViewModel: navigationViewModel)
-                    // Overlays y controles...
-                
-                } else {
-                    // Pantalla de orientación perfectamente centrada
-                    VStack {
-                        Spacer()
-                        Image(systemName: "iphone.landscape")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(.blue)
-                            .padding(.bottom, 20)
-
-                        Text("Please rotate your device")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding(.bottom, 20)
-                            .multilineTextAlignment(.center)
-
-                        Button(action: {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            navigationViewModel.currentView = .illnessList
-                            navigationViewModel.stopVoiceRecognition()
-                        }) {
-                            Image(systemName: "chevron.left.circle")
-                                .resizable()
-                                .frame(width: 48, height: 48)
-                                .foregroundColor(.blue)
-                                .opacity(0.85)
-                                .padding()
-                        }
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.ignoresSafeArea())
-                }
-            }
-        }
-        .onAppear {
-            cameraService.startSession()
-        }
-        .onDisappear {
-            cameraService.stopSession()
-        }
-    }
-}
 
 // MARK: - Visual Filter Overlay for Each Illness
 

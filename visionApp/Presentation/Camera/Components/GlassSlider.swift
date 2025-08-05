@@ -11,18 +11,18 @@ import SwiftUI
 
 struct GlassSlider: View {
     @Binding var value: Double
-    var width: CGFloat = 220
+    var width: CGFloat = 280
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .frame(width: width, height: 24) // MÁS FINO
+                .frame(width: width, height: 20)
                 .shadow(radius: 2, y: 1)
             Slider(value: $value, in: 0.1...1.0)
-                .tint(Color.blue)
+                .tint(Color.blue.opacity(0.8))
                 .padding(.horizontal, 8)
         }
-        .frame(width: width, height: 24)
+        .frame(width: width, height: 20)
     }
 }
