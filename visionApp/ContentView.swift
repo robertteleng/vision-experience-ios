@@ -51,8 +51,8 @@ struct ContentView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // Request speech recognition authorization when the app launches
-            navigationViewModel.setupSpeech()
+            // Solicita autorización de reconocimiento de voz al iniciar la app
+            navigationViewModel.speechService.requestAuthorization { _ in }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             let orientation = UIDevice.current.orientation
@@ -62,18 +62,18 @@ struct ContentView: View {
         }
         .onChange(of: isLandscape) {
             if isCardboardMode && isLandscape {
-                navigationViewModel.startVoiceRecognition()
+                navigationViewModel.speechService.startRecognition()
             } else if isCardboardMode && !isLandscape {
-                navigationViewModel.stopVoiceRecognition()
+                navigationViewModel.speechService.stopRecognition()
             }
         }
         .onChange(of: isCardboardMode) {
             if isCardboardMode {
                 if isLandscape {
-                    navigationViewModel.startVoiceRecognition()
+                    navigationViewModel.speechService.startRecognition()
                 }
             } else {
-                navigationViewModel.stopVoiceRecognition()
+                navigationViewModel.speechService.stopRecognition()
             }
         }
     }

@@ -82,7 +82,7 @@ struct CameraView: View {
                         Button(action: {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             navigationViewModel.currentView = .illnessList
-                            navigationViewModel.stopVoiceRecognition()
+                            navigationViewModel.speechService.stopRecognition()
                         }) {
                             Image(systemName: "chevron.left.circle")
                                 .resizable()
@@ -96,9 +96,6 @@ struct CameraView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.black.ignoresSafeArea())
                 }
-            }
-            .onChange(of: orientationObserver.orientation) { newOrientation, _ in
-                cameraService.updateVideoOrientation(deviceOrientation: newOrientation)
             }
         }
         .onAppear {
