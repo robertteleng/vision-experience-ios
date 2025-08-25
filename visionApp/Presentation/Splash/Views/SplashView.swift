@@ -1,3 +1,10 @@
+//
+//  SplashView.swift
+//  visionApp
+//
+//  Created by Roberto Rojo Sahuquillo on 5/8/25.
+//
+
 import SwiftUI
 import Lottie
 
@@ -23,7 +30,7 @@ struct SplashView: View {
                     Image(uiImage: uiImage)
                         .resizable()
                         .renderingMode(.template)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .frame(width: 80, height: 80)
                         .opacity(0.8)
                         .padding(.bottom, 30)

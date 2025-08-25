@@ -10,11 +10,12 @@ import SwiftUI
 import Combine
 
 final class DeviceOrientationObserver: ObservableObject {
+    static let shared = DeviceOrientationObserver()
     @Published var orientation: UIDeviceOrientation = UIDevice.current.orientation
 
     private var observer: NSObjectProtocol?
 
-    init() {
+    private init() {
         observer = NotificationCenter.default.addObserver(
             forName: UIDevice.orientationDidChangeNotification,
             object: nil,

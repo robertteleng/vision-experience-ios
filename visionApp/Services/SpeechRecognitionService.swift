@@ -1,3 +1,13 @@
+//
+//  SpeechRecognitionService.swift
+//  visionApp
+//
+//  Created by Roberto Rojo Sahuquillo on 5/8/25.
+//
+//  Service to manage camera capture session, provide preview, and handle errors.
+//  Designed for SwiftUI integration using UIViewRepresentable.
+//
+
 import Foundation
 import Speech
 import Combine

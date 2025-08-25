@@ -12,6 +12,7 @@ struct visionAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(DeviceOrientationObserver.shared)
         }
     }
 }

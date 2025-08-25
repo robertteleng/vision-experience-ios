@@ -5,6 +5,7 @@ struct CardboardView: View {
     @ObservedObject var cameraService: CameraService
     let illness: Illness?
     let centralFocus: Double
+    @State var deviceOrientation: UIDeviceOrientation
 
     var body: some View {
         GeometryReader { geometry in
