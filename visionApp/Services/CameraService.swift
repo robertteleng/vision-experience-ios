@@ -3,13 +3,14 @@
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
-
+//
 //  Service to manage camera capture session, provide preview, and handle errors.
 //  Designed for SwiftUI integration using UIViewRepresentable.
 //
 
 import Foundation
 import AVFoundation
+import UIKit
 
 class CameraService: NSObject, ObservableObject {
     // The camera session managed by this service
@@ -21,6 +22,9 @@ class CameraService: NSObject, ObservableObject {
 
     // Publish errors to the UI
     @Published var error: CameraError?
+    @Published var currentFrame: UIImage?
+
+    private var videoOutput: AVCaptureVideoDataOutput?
 
     // Camera permission status
     enum CameraError: Error, LocalizedError {
@@ -47,7 +51,6 @@ class CameraService: NSObject, ObservableObject {
 
     /// Request permission and start camera session if authorized
     func startSession() {
-        // Request camera permission if needed
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configureSession()
@@ -78,7 +81,6 @@ class CameraService: NSObject, ObservableObject {
     private func configureSession() {
         sessionQueue.async {
             do {
-                // Clean previous inputs
                 self.session.beginConfiguration()
                 self.session.sessionPreset = .high
 
@@ -104,14 +106,35 @@ class CameraService: NSObject, ObservableObject {
                 self.session.addInput(videoInput)
 
                 self.session.commitConfiguration()
-
-                // Prepare previewLayer if using UIKit (for SwiftUI use UIViewRepresentable)
                 self.session.startRunning()
-                
+                self.setupVideoOutput()
             } catch {
                 DispatchQueue.main.async {
                     self.error = .configurationFailed
                 }
+            }
+        }
+    }
+
+    private func setupVideoOutput() {
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera.frame.queue"))
+        if self.session.canAddOutput(videoOutput) {
+            self.session.addOutput(videoOutput)
+            self.videoOutput = videoOutput
+        }
+    }
+}
+
+extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        let context = CIContext()
+        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+            let image = UIImage(cgImage: cgImage)
+            DispatchQueue.main.async {
+                self.currentFrame = image
             }
         }
     }

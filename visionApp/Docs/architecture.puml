@@ -1,0 +1,76 @@
+@startuml
+title visionApp - Arquitectura Horizontal
+
+skinparam packageStyle rect
+
+' Paquetes principales en horizontal
+package "App" {
+  [visionAppApp.swift]
+}
+
+package "Presentation" {
+  [ContentView.swift]
+  [SplashView.swift]
+  [IllnessListView.swift]
+  [CameraView.swift]
+  [NavigationViewModel.swift]
+}
+
+package "Domain" {
+  [Illness.swift]
+  [AppScreen.swift]
+}
+
+package "Services" {
+  [CameraService.swift]
+  [SpeechRecognitionService.swift]
+  [TextToSpeechService.swift]
+}
+
+package "Components" {
+  [LottieView.swift]
+  [FloatingMenu]
+  [GlassSlider]
+}
+
+package "Extensions" {
+  [UIDevice+Orientation.swift]
+  [CameraService+Extensions.swift]
+  [Image+Extensions.swift]
+}
+
+package "Utilities" {
+  [DeviceOrientationObserver.swift]
+  [FeedbackGenerator.swift]
+}
+
+package "Resources" {
+  [Assets.xcassets]
+  [eyeAnimation.json]
+  [logo.png]
+}
+
+' Relaciones principales
+[visionAppApp.swift] --> [ContentView.swift]
+[ContentView.swift] --> [NavigationViewModel.swift]
+[ContentView.swift] --> [SplashView.swift]
+[ContentView.swift] --> [IllnessListView.swift]
+[ContentView.swift] --> [CameraView.swift]
+[NavigationViewModel.swift] --> [AppScreen.swift]
+[IllnessListView.swift] --> [Illness.swift]
+[CameraView.swift] --> [CameraService.swift]
+[CameraView.swift] --> [CameraPreviewView.swift]
+[CameraView.swift] --> [FloatingMenu]
+[CameraView.swift] --> [GlassSlider]
+[CameraView.swift] --> [DeviceOrientationObserver.swift]
+[CameraService.swift] --> [CameraService+Extensions.swift]
+[CameraService.swift] --> [CameraPreviewView.swift]
+[ContentView.swift] --> [SpeechRecognitionService.swift]
+[ContentView.swift] --> [TextToSpeechService.swift]
+[ContentView.swift] --> [UIDevice+Orientation.swift]
+[ContentView.swift] --> [FeedbackGenerator.swift]
+[ContentView.swift] --> [Assets.xcassets]
+[ContentView.swift] --> [logo.png]
+[ContentView.swift] --> [eyeAnimation.json]
+
+@enduml

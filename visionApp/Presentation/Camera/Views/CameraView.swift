@@ -14,15 +14,29 @@ struct CameraView: View {
     @StateObject private var cameraService = CameraService()
     @State private var menuExpanded = false
     @StateObject private var orientationObserver = DeviceOrientationObserver()
+    @Binding var isCardboardMode: Bool // Cambiado a Binding
 
     var body: some View {
         GeometryReader { geometry in
             let isLandscape = geometry.size.width > geometry.size.height
             ZStack {
                 if isLandscape {
-                    // Cámara a pantalla completa
-                    CameraPreviewView(session: cameraService.session)
-                        .ignoresSafeArea()
+                    if isCardboardMode {
+                        // Usar la vista modular CardboardView
+                        CardboardView(
+                            cameraService: cameraService,
+                            illness: navigationViewModel.selectedIllness,
+                            centralFocus: navigationViewModel.centralFocus
+                        )
+                    } else {
+                        // Normal mode: camera feed with filter overlay
+                        ZStack {
+                            CameraPreviewView(session: cameraService.session)
+                                .ignoresSafeArea()
+                            ColorOverlay(illness: navigationViewModel.selectedIllness, centralFocus: navigationViewModel.centralFocus)
+                                .ignoresSafeArea()
+                        }
+                    }
 
                     // Menú flotante en la esquina inferior izquierda
                     VStack {
@@ -38,11 +52,10 @@ struct CameraView: View {
                         VStack {
                             Spacer()
                             HStack(spacing: 0) {
-                                // El ancho real del botón de menú flotante + padding izquierdo
-                                Spacer().frame(width: 68) // 56 icono + 12 padding
+                                Spacer().frame(width: 68)
                                 GlassSlider(
                                     value: $navigationViewModel.centralFocus,
-                                    width: geometry.size.width - 68 - 32 // 32pt margen derecho
+                                    width: geometry.size.width - 68 - 32
                                 )
                                 .frame(height: 32)
                             }
@@ -84,7 +97,7 @@ struct CameraView: View {
                     .background(Color.black.ignoresSafeArea())
                 }
             }
-            .onChange(of: orientationObserver.orientation) { newOrientation in
+            .onChange(of: orientationObserver.orientation) { newOrientation, _ in
                 cameraService.updateVideoOrientation(deviceOrientation: newOrientation)
             }
         }
