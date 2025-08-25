@@ -7,10 +7,8 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct FloatingMenu: View {
-    @ObservedObject var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var globalViewModel: GlobalViewModel
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
@@ -33,7 +31,7 @@ struct FloatingMenu: View {
                 }
                 // Cardboard glasses icon button
                 Button(action: {
-                    $navigationViewModel.isCardboardMode.toggle
+                    globalViewModel.isCardboardMode.toggle()
                 }) {
                     FloatingMenuIcon(systemName: "goforward") // Replace with custom asset if available
                 }

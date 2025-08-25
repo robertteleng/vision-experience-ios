@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct IllnessListView: View {
-    var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var router: AppRouter
 
     // Lista de enfermedades usando el modelo Illness
     let illnesses: [Illness] = [
@@ -16,8 +17,8 @@ struct IllnessListView: View {
             VStack(spacing: 28) {
                 ForEach(illnesses) { illness in
                     FloatingGlassButton(title: illness.name, iconName: "eye") {
-                        navigationViewModel.selectedIllness = illness
-                        navigationViewModel.currentView = .camera
+                        globalViewModel.selectedIllness = illness
+                        router.currentRoute = .camera
                     }
                 }
             }

@@ -1,40 +1,29 @@
-//
-//  ContentView.swift
-//  visionApp
-//
-//  Main user interface logic, state management and navigation for the app.
-//  Implements MVVM principles: views are separated, state is handled by NavigationViewModel.
-//  Includes voice command processing and basic AR/Camera simulation.
-//
-
 import SwiftUI
 import AVFoundation
 import Speech
 
-// MARK: - Main Entry Point and App Navigation
-
 struct ContentView: View {
-    @StateObject private var navigationViewModel = NavigationViewModel()
-    @State private var isCardboardMode = false
-    @State private var isLandscape = UIDevice.current.orientation.isLandscape
+    @EnvironmentObject var router: AppRouter
+    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var orientationObserver: DeviceOrientationObserver
 
     var body: some View {
         NavigationView {
             VStack {
-                // Render the main screens based on the navigation state
-                switch navigationViewModel.currentView {
+                // Renderiza la pantalla según el estado de navegación
+                switch router.currentRoute {
                 case .splash:
-                    SplashView(navigationViewModel: navigationViewModel)
+                    SplashView()
                 case .illnessList:
-                    IllnessListView(navigationViewModel: navigationViewModel)
+                    IllnessListView()
                 case .camera:
-                    CameraView(navigationViewModel: navigationViewModel, isCardboardMode: $isCardboardMode)
+                    CameraView(isCardboardMode: $globalViewModel.isCardboardMode)
                 }
 
-                // Show the Cardboard button in both illness list and camera screens
-                if navigationViewModel.currentView == .illnessList || navigationViewModel.currentView == .camera {
+                // Botón para Cardboard en illnessList y camera
+                if router.currentRoute == .illnessList || router.currentRoute == .camera {
                     Button(action: {
-                        isCardboardMode.toggle()
+                        globalViewModel.isCardboardMode.toggle()
                     }) {
                         Image(systemName: "eyeglasses")
                             .resizable()
@@ -42,7 +31,7 @@ struct ContentView: View {
                             .padding()
                             .background(
                                 Circle()
-                                    .fill(Color.blue.opacity(isCardboardMode ? 1.0 : 0.3))
+                                    .fill(Color.blue.opacity(globalViewModel.isCardboardMode ? 1.0 : 0.3))
                             )
                             .foregroundColor(.white)
                     }
@@ -51,29 +40,23 @@ struct ContentView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // Solicita autorización de reconocimiento de voz al iniciar la app
-            navigationViewModel.speechService.requestAuthorization { _ in }
+            // Si tienes lógica de voz, puedes inicializar aquí
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            let orientation = UIDevice.current.orientation
-            if orientation.isValidInterfaceOrientation {
-                isLandscape = orientation.isLandscape
+        .onChange(of: orientationObserver.orientation) {
+            let isLandscape = orientationObserver.orientation.isLandscape
+            if globalViewModel.isCardboardMode && isLandscape {
+                // Si tienes lógica de voz, puedes activarla aquí
+            } else if globalViewModel.isCardboardMode && !isLandscape {
+                // Si tienes lógica de voz, puedes desactivarla aquí
             }
         }
-        .onChange(of: isLandscape) {
-            if isCardboardMode && isLandscape {
-                navigationViewModel.speechService.startRecognition()
-            } else if isCardboardMode && !isLandscape {
-                navigationViewModel.speechService.stopRecognition()
-            }
-        }
-        .onChange(of: isCardboardMode) {
-            if isCardboardMode {
-                if isLandscape {
-                    navigationViewModel.speechService.startRecognition()
+        .onChange(of: globalViewModel.isCardboardMode) {
+            if globalViewModel.isCardboardMode {
+                if orientationObserver.orientation.isLandscape {
+                    // Si tienes lógica de voz, puedes activarla aquí
                 }
             } else {
-                navigationViewModel.speechService.stopRecognition()
+                // Si tienes lógica de voz, puedes desactivarla aquí
             }
         }
     }

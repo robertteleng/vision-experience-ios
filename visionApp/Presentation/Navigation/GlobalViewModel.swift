@@ -1,16 +1,20 @@
+//
+//  GlobalViewModel.swift
+//  visionApp
+//
+//  Created by Roberto Rojo Sahuquillo on 5/8/25.
+//
+
 import SwiftUI
 import Combine
 import AVFoundation
 
-enum AppScreen {
-    case splash, illnessList, camera
-}
 
-class NavigationViewModel: ObservableObject {
-    @Published var currentView: AppScreen = .splash
+class GlobalViewModel: ObservableObject {
     @Published var selectedIllness: Illness?
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
+    @Published var isCardboardMode: Bool = false
 
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
@@ -28,15 +32,15 @@ class NavigationViewModel: ObservableObject {
                 // Navigation and illness selection voice commands
                 if command.contains("cataracts") {
                     self.selectedIllness = Illness(name: "Cataracts", description: "Simulates cataracts vision.", filterType: .cataracts)
-                    self.currentView = .camera
+                    // Navegación: usa AppRouter en la vista principal
                     self.speak("Cataracts filter activated")
                 } else if command.contains("glaucoma") {
                     self.selectedIllness = Illness(name: "Glaucoma", description: "Simulates glaucoma vision.", filterType: .glaucoma)
-                    self.currentView = .camera
+                    // Navegación: usa AppRouter en la vista principal
                     self.speak("Glaucoma filter activated")
                 } else if command.contains("macular") {
                     self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration)
-                    self.currentView = .camera
+                    // Navegación: usa AppRouter en la vista principal
                     self.speak("Macular degeneration filter activated")
                 }
             }

@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct CameraView: View {
-    @ObservedObject var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var globalViewModel: GlobalViewModel
     @StateObject private var cameraViewModel = CameraViewModel()
     @State private var menuExpanded = false
-    @EnvironmentObject var orientationObserver: DeviceOrientationObserver // Usar el singleton global
-    @Binding var isCardboardMode: Bool // Cambiado a Binding
+    @EnvironmentObject var orientationObserver: DeviceOrientationObserver
+    @Binding var isCardboardMode: Bool
 
     var body: some View {
         ZStack {
@@ -22,14 +22,14 @@ struct CameraView: View {
                     ZStack {
                         CardboardView(
                             cameraService: cameraViewModel.cameraService,
-                            illness: navigationViewModel.selectedIllness,
-                            centralFocus: navigationViewModel.centralFocus,
+                            illness: globalViewModel.selectedIllness,
+                            centralFocus: globalViewModel.centralFocus,
                             deviceOrientation: orientationObserver.orientation
                         )
                         // Floating menu overlay
                         VStack {
                             Spacer()
-                            FloatingMenu(navigationViewModel: navigationViewModel, expanded: $menuExpanded)
+                            FloatingMenu(expanded: $menuExpanded)
                                 .padding(.leading, 12)
                                 .padding(.bottom, 12)
                         }
@@ -41,7 +41,7 @@ struct CameraView: View {
                                 HStack(spacing: 0) {
                                     Spacer().frame(width: 68)
                                     GlassSlider(
-                                        value: $navigationViewModel.centralFocus,
+                                        value: $globalViewModel.centralFocus,
                                         width: UIScreen.main.bounds.width - 68 - 32
                                     )
                                     .frame(height: 32)
@@ -57,7 +57,7 @@ struct CameraView: View {
                     ZStack {
                         CameraPreviewView(session: cameraViewModel.cameraService.session)
                             .ignoresSafeArea()
-                        ColorOverlay(illness: navigationViewModel.selectedIllness, centralFocus: navigationViewModel.centralFocus)
+                        ColorOverlay(illness: globalViewModel.selectedIllness, centralFocus: globalViewModel.centralFocus)
                             .ignoresSafeArea()
                     }
                 }
@@ -77,8 +77,10 @@ struct CameraView: View {
                         .multilineTextAlignment(.center)
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        navigationViewModel.currentView = .illnessList
-                        navigationViewModel.speechService.stopRecognition()
+                        // Navegación: usa AppRouter en la vista principal
+                        // navigationViewModel.currentView = .illnessList
+                        // navigationViewModel.speechService.stopRecognition()
+                        // Si necesitas navegar, usa router.currentRoute = .illnessList
                     }) {
                         Image(systemName: "chevron.left.circle")
                             .resizable()

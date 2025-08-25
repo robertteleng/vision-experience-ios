@@ -9,7 +9,7 @@ import SwiftUI
 import Lottie
 
 struct SplashView: View {
-    var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var router: AppRouter
     @State private var animate = false
 
     var body: some View {
@@ -41,7 +41,7 @@ struct SplashView: View {
             animate = true
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                navigationViewModel.currentView = .illnessList
+                router.currentRoute = .illnessList
             }
         }
     }
