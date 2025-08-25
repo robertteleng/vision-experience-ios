@@ -2,7 +2,7 @@
 //  CameraView.swift
 //  visionApp
 //
-//  Created by Roberto Rojo Sahuquillo on 25/8/25.
+//  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
 
 import SwiftUI
@@ -11,20 +11,48 @@ struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
     @StateObject private var cameraViewModel = CameraViewModel()
     @State private var menuExpanded = false
-    @EnvironmentObject var orientationObserver: DeviceOrientationObserver
-    @Binding var isCardboardMode: Bool
+    @EnvironmentObject var orientationObserver: DeviceOrientationObserver // Usar el singleton global
+    @Binding var isCardboardMode: Bool // Cambiado a Binding
 
     var body: some View {
         ZStack {
             let isLandscape = orientationObserver.orientation.isLandscape
             if isLandscape {
                 if isCardboardMode {
-                    CardboardView(
-                        cameraService: cameraViewModel.cameraService,
-                        illness: navigationViewModel.selectedIllness,
-                        centralFocus: navigationViewModel.centralFocus,
-                        deviceOrientation: orientationObserver.orientation
-                    )
+                    ZStack {
+                        CardboardView(
+                            cameraService: cameraViewModel.cameraService,
+                            illness: navigationViewModel.selectedIllness,
+                            centralFocus: navigationViewModel.centralFocus,
+                            deviceOrientation: orientationObserver.orientation
+                        )
+                        // Floating menu overlay
+                        VStack {
+                            Spacer()
+                            FloatingMenu(navigationViewModel: navigationViewModel, expanded: $menuExpanded)
+                                .padding(.leading, 12)
+                                .padding(.bottom, 12)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        // Slider overlay
+                        if menuExpanded {
+                            VStack {
+                                Spacer()
+                                HStack(spacing: 0) {
+                                    Spacer().frame(width: 68)
+                                    GlassSlider(
+                                        value: $navigationViewModel.centralFocus,
+                                        width: UIScreen.main.bounds.width - 68 - 32
+                                    )
+                                    .frame(height: 32)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .bottom)
+                                .padding(.bottom, 12)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        }
+                    }
+                    .ignoresSafeArea()
                 } else {
                     ZStack {
                         CameraPreviewView(session: cameraViewModel.cameraService.session)
@@ -32,29 +60,6 @@ struct CameraView: View {
                         ColorOverlay(illness: navigationViewModel.selectedIllness, centralFocus: navigationViewModel.centralFocus)
                             .ignoresSafeArea()
                     }
-                }
-                VStack {
-                    Spacer()
-                    FloatingMenu(navigationViewModel: navigationViewModel, expanded: $menuExpanded)
-                        .padding(.leading, 12)
-                        .padding(.bottom, 12)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                if menuExpanded {
-                    VStack {
-                        Spacer()
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 68)
-                            GlassSlider(
-                                value: $navigationViewModel.centralFocus,
-                                width: UIScreen.main.bounds.width - 68 - 32
-                            )
-                            .frame(height: 32)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .bottom)
-                        .padding(.bottom, 12)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 }
             } else {
                 VStack {

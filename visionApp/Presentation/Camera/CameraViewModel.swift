@@ -10,7 +10,7 @@ import SwiftUI
 
 class CameraViewModel: ObservableObject {
     @Published var currentFrame: UIImage?
-    @Published var error: CameraService.CameraError?
+    @Published var error: CameraError?
     
     let cameraService = CameraService() // Cambiado de private a internal
     

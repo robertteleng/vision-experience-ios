@@ -12,11 +12,34 @@ import Foundation
 import AVFoundation
 import UIKit
 
+
+// Camera permission status
+enum CameraError: Error, LocalizedError {
+    case authorizationDenied
+    case configurationFailed
+    case deviceUnavailable
+    case unknown
+
+    var errorDescription: String? {
+        switch self {
+        case .authorizationDenied:
+            return "Camera access was denied. Please enable it in settings."
+        case .configurationFailed:
+            return "Failed to configure the camera."
+        case .deviceUnavailable:
+            return "No camera device is available."
+        case .unknown:
+            return "Unknown camera error."
+        }
+    }
+}
+
+
 class CameraService: NSObject, ObservableObject {
     // The camera session managed by this service
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
-    
+
     // The video preview layer (can be used directly in UIKit)
     var previewLayer: AVCaptureVideoPreviewLayer?
 
@@ -26,26 +49,7 @@ class CameraService: NSObject, ObservableObject {
 
     private var videoOutput: AVCaptureVideoDataOutput?
 
-    // Camera permission status
-    enum CameraError: Error, LocalizedError {
-        case authorizationDenied
-        case configurationFailed
-        case deviceUnavailable
-        case unknown
-
-        var errorDescription: String? {
-            switch self {
-            case .authorizationDenied:
-                return "Camera access was denied. Please enable it in settings."
-            case .configurationFailed:
-                return "Failed to configure the camera."
-            case .deviceUnavailable:
-                return "No camera device is available."
-            case .unknown:
-                return "Unknown camera error."
-            }
-        }
-    }
+    private var isConfiguringSession = false
 
     // MARK: - Public Methods
 
@@ -72,7 +76,9 @@ class CameraService: NSObject, ObservableObject {
     /// Stop camera session
     func stopSession() {
         sessionQueue.async {
-            self.session.stopRunning()
+            if !self.isConfiguringSession {
+                self.session.stopRunning()
+            }
         }
     }
 
@@ -80,6 +86,7 @@ class CameraService: NSObject, ObservableObject {
 
     private func configureSession() {
         sessionQueue.async {
+            self.isConfiguringSession = true
             do {
                 self.session.beginConfiguration()
                 self.session.sessionPreset = .high
@@ -94,6 +101,7 @@ class CameraService: NSObject, ObservableObject {
                     DispatchQueue.main.async {
                         self.error = .deviceUnavailable
                     }
+                    self.isConfiguringSession = false
                     return
                 }
                 let videoInput = try AVCaptureDeviceInput(device: videoDevice)
@@ -101,17 +109,20 @@ class CameraService: NSObject, ObservableObject {
                     DispatchQueue.main.async {
                         self.error = .configurationFailed
                     }
+                    self.isConfiguringSession = false
                     return
                 }
                 self.session.addInput(videoInput)
 
                 self.session.commitConfiguration()
+                self.isConfiguringSession = false
                 self.session.startRunning()
                 self.setupVideoOutput()
             } catch {
                 DispatchQueue.main.async {
                     self.error = .configurationFailed
                 }
+                self.isConfiguringSession = false
             }
         }
     }

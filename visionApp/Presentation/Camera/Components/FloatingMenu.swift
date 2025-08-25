@@ -31,6 +31,12 @@ struct FloatingMenu: View {
                 Button(action: { print("Gear pulsado") }) {
                     FloatingMenuIcon(systemName: "gear")
                 }
+                // Cardboard glasses icon button
+                Button(action: {
+                    $navigationViewModel.isCardboardMode.toggle
+                }) {
+                    FloatingMenuIcon(systemName: "goforward") // Replace with custom asset if available
+                }
             }
             Button(action: {
                 let generator = UIImpactFeedbackGenerator(style: .medium)

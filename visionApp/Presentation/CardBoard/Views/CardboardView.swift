@@ -13,10 +13,8 @@ struct CardboardView: View {
                 ZStack {
                     CameraImageView(image: cameraService.currentFrame, panel: .left)
                         .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .background(Color.black)
-                        .border(Color.red, width: 2)
-                    ColorOverlay(illness: illness, centralFocus: centralFocus)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                        .ignoresSafeArea()
+                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .left)
                         .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
                         Text("No frame LEFT")
@@ -27,10 +25,8 @@ struct CardboardView: View {
                 ZStack {
                     CameraImageView(image: cameraService.currentFrame, panel: .right)
                         .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .background(Color.black)
-                        .border(Color.blue, width: 2)
-                    ColorOverlay(illness: illness, centralFocus: centralFocus)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                        .ignoresSafeArea()
+                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .right)
                         .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
                         Text("No frame RIGHT")
@@ -40,7 +36,6 @@ struct CardboardView: View {
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-            .background(Color.black)
         }
     }
 }
