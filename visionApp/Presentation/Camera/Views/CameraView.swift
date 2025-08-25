@@ -1,5 +1,5 @@
 //
-//  CameraViewModel.swift
+//  CameraView.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 25/8/25.

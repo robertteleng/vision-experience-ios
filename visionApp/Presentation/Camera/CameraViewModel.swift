@@ -1,3 +1,10 @@
+//
+//  CameraViewModel.swift
+//  visionApp
+//
+//  Created by Roberto Rojo Sahuquillo on 25/8/25.
+//
+
 import Foundation
 import SwiftUI
 
