@@ -5,7 +5,7 @@ class CameraViewModel: ObservableObject {
     @Published var currentFrame: UIImage?
     @Published var error: CameraService.CameraError?
     
-    let cameraService = CameraService() // Cambiado de private a internal
+    private let cameraService = CameraService()
     
     init() {
         cameraService.$currentFrame
