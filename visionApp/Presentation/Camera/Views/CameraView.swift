@@ -1,13 +1,11 @@
 //
-//  Untitled.swift
+//  CameraView.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
 
 import SwiftUI
-
-// --- CameraView.swift ---
 
 struct CameraView: View {
     @ObservedObject var navigationViewModel: NavigationViewModel
