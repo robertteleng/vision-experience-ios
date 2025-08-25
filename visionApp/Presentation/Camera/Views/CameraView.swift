@@ -13,6 +13,7 @@ struct CameraView: View {
     @State private var menuExpanded = false
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
     @Binding var isCardboardMode: Bool
+    @EnvironmentObject var router: AppRouter
 
     var body: some View {
         ZStack {
@@ -77,10 +78,8 @@ struct CameraView: View {
                         .multilineTextAlignment(.center)
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        // Navegación: usa AppRouter en la vista principal
-                        // navigationViewModel.currentView = .illnessList
-                        // navigationViewModel.speechService.stopRecognition()
-                        // Si necesitas navegar, usa router.currentRoute = .illnessList
+                        router.currentRoute = .illnessList
+                        // Si tienes lógica de voz, puedes detenerla aquí
                     }) {
                         Image(systemName: "chevron.left.circle")
                             .resizable()

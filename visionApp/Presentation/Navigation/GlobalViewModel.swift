@@ -19,6 +19,8 @@ class GlobalViewModel: ObservableObject {
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
 
+    var navigateToIllnessList: (() -> Void)?
+
     init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
         self.speechService = speechService
         setupSpeechRecognitionBinding()
@@ -29,19 +31,25 @@ class GlobalViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] command in
                 guard let self = self else { return }
-                // Navigation and illness selection voice commands
-                if command.contains("cataracts") {
-                    self.selectedIllness = Illness(name: "Cataracts", description: "Simulates cataracts vision.", filterType: .cataracts)
-                    // Navegación: usa AppRouter en la vista principal
-                    self.speak("Cataracts filter activated")
-                } else if command.contains("glaucoma") {
-                    self.selectedIllness = Illness(name: "Glaucoma", description: "Simulates glaucoma vision.", filterType: .glaucoma)
-                    // Navegación: usa AppRouter en la vista principal
-                    self.speak("Glaucoma filter activated")
-                } else if command.contains("macular") {
-                    self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration)
-                    // Navegación: usa AppRouter en la vista principal
-                    self.speak("Macular degeneration filter activated")
+                let lowercased = command.lowercased()
+                // Comando para volver atrás (español e inglés)
+                if lowercased.contains("volver") || lowercased.contains("atrás") || lowercased.contains("back") || lowercased.contains("go back") {
+                    self.navigateToIllnessList?()
+                    self.speak("Volviendo a la selección de enfermedad")
+                    return
+                }
+                // Cataracts
+                if lowercased.contains("cataracts") || lowercased.contains("cataratas") {
+                    self.selectedIllness = Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts)
+                    self.speak("Filtro de cataratas activado")
+                // Glaucoma
+                } else if lowercased.contains("glaucoma") {
+                    self.selectedIllness = Illness(name: "Glaucoma", description: "Simula visión con glaucoma.", filterType: .glaucoma)
+                    self.speak("Filtro de glaucoma activado")
+                // Macular Degeneration
+                } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") {
+                    self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
+                    self.speak("Filtro de degeneración macular activado")
                 }
             }
             .store(in: &cancellables)

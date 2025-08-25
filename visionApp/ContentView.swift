@@ -42,21 +42,26 @@ struct ContentView: View {
         .onAppear {
             // Si tienes lógica de voz, puedes inicializar aquí
         }
+        .onChange(of: globalViewModel.selectedIllness) {
+            if globalViewModel.selectedIllness != nil {
+                router.currentRoute = .camera
+            }
+        }
         .onChange(of: orientationObserver.orientation) {
             let isLandscape = orientationObserver.orientation.isLandscape
             if globalViewModel.isCardboardMode && isLandscape {
-                // Si tienes lógica de voz, puedes activarla aquí
-            } else if globalViewModel.isCardboardMode && !isLandscape {
-                // Si tienes lógica de voz, puedes desactivarla aquí
+                globalViewModel.speechService.startRecognition()
+            } else {
+                globalViewModel.speechService.stopRecognition()
             }
         }
         .onChange(of: globalViewModel.isCardboardMode) {
             if globalViewModel.isCardboardMode {
                 if orientationObserver.orientation.isLandscape {
-                    // Si tienes lógica de voz, puedes activarla aquí
+                    globalViewModel.speechService.startRecognition()
                 }
             } else {
-                // Si tienes lógica de voz, puedes desactivarla aquí
+                globalViewModel.speechService.stopRecognition()
             }
         }
     }
