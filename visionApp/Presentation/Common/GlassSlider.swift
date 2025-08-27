@@ -9,8 +9,6 @@
 
 import SwiftUI
 
-// --- GlassSlider.swift ---
-
 struct GlassSlider: View {
     @Binding var value: Double
     var width: CGFloat = 220

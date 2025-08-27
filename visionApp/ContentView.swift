@@ -9,7 +9,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
+            ZStack {
                 // Renderiza la pantalla según el estado de navegación
                 switch router.currentRoute {
                 case .splash:
@@ -19,22 +19,26 @@ struct ContentView: View {
                 case .camera:
                     CameraView(isCardboardMode: $globalViewModel.isCardboardMode)
                 }
-
-                // Botón para Cardboard en illnessList y camera
-                if router.currentRoute == .illnessList || router.currentRoute == .camera {
+            }
+            // Overlay del botón para Cardboard sin afectar el layout de la vista principal
+            .overlay(alignment: .bottomTrailing) {
+                if router.currentRoute == .illnessList { // En cámara ya está en el menú flotante
                     Button(action: {
                         globalViewModel.isCardboardMode.toggle()
                     }) {
                         Image(systemName: "eyeglasses")
                             .resizable()
                             .frame(width: 24, height: 16)
-                            .padding()
+                            .padding(12)
                             .background(
                                 Circle()
                                     .fill(Color.blue.opacity(globalViewModel.isCardboardMode ? 1.0 : 0.3))
                             )
                             .foregroundColor(.white)
+                            .shadow(radius: 4)
                     }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
                 }
             }
             .navigationBarHidden(true)

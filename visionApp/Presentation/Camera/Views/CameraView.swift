@@ -35,6 +35,7 @@ struct CameraView: View {
                                 .padding(.bottom, 12)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .zIndex(2)
                         // Slider overlay
                         if menuExpanded {
                             VStack {
@@ -51,6 +52,7 @@ struct CameraView: View {
                                 .padding(.bottom, 12)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .zIndex(1)
                         }
                     }
                     .ignoresSafeArea()
@@ -60,7 +62,35 @@ struct CameraView: View {
                             .ignoresSafeArea()
                         ColorOverlay(illness: globalViewModel.selectedIllness, centralFocus: globalViewModel.centralFocus)
                             .ignoresSafeArea()
+                        // Floating menu overlay (non-Cardboard)
+                        VStack {
+                            Spacer()
+                            FloatingMenu(expanded: $menuExpanded)
+                                .padding(.leading, 12)
+                                .padding(.bottom, 12)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .zIndex(2)
+                        // Slider overlay (non-Cardboard)
+                        if menuExpanded {
+                            VStack {
+                                Spacer()
+                                HStack(spacing: 0) {
+                                    Spacer().frame(width: 68)
+                                    GlassSlider(
+                                        value: $globalViewModel.centralFocus,
+                                        width: UIScreen.main.bounds.width - 68 - 32
+                                    )
+                                    .frame(height: 32)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .bottom)
+                                .padding(.bottom, 12)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .zIndex(1)
+                        }
                     }
+                    .ignoresSafeArea()
                 }
             } else {
                 VStack {

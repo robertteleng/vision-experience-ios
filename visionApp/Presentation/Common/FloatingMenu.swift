@@ -12,6 +12,9 @@ struct FloatingMenu: View {
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
+    // Anchoring width so other overlays (e.g., bottom slider bar) can align to the menu's right edge
+    static let menuWidth: CGFloat = 56 // icon (24) + internal spacing and safe touch area
+
     // Slider width adaptativo
     var sliderWidth: CGFloat {
         verticalSizeClass == .compact ? 340 : 220
@@ -33,7 +36,7 @@ struct FloatingMenu: View {
                 Button(action: {
                     globalViewModel.isCardboardMode.toggle()
                 }) {
-                    FloatingMenuIcon(systemName: "goforward") // Replace with custom asset if available
+                    FloatingMenuIcon(systemName: "eyeglasses")
                 }
             }
             Button(action: {
@@ -49,7 +52,7 @@ struct FloatingMenu: View {
                 )
             }
         }
-        .padding(.leading, 12)
+        .frame(width: FloatingMenu.menuWidth, alignment: .leading)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
     }

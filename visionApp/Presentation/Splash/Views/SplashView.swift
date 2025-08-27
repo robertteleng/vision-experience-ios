@@ -24,16 +24,15 @@ struct SplashView: View {
 
                 Spacer()
                 
-                HStack {
+                VStack {
                     
                     // Logo centered at the bottom (should exist in bundle)
                     if let path = Bundle.main.path(forResource: "logo-umh", ofType: "png"),
                        let uiImage = UIImage(contentsOfFile: path) {
                         Image(uiImage: uiImage)
                             .resizable()
-                            .renderingMode(.template)
-                            .foregroundColor(.primary)
-                            .frame(width: 80, height: 80)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: UIScreen.main.bounds.width * 0.2)
                             .opacity(0.8)
                             .padding(.bottom, 30)
                     }
@@ -44,9 +43,8 @@ struct SplashView: View {
                        let uiImage = UIImage(contentsOfFile: path) {
                         Image(uiImage: uiImage)
                             .resizable()
-                            .renderingMode(.template)
-                            .foregroundColor(.primary)
-                            .frame(width: 180, height: 120)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: UIScreen.main.bounds.width * 0.4)
                             .opacity(0.8)
                             .padding(.bottom, 30)
                     }
@@ -65,3 +63,4 @@ struct SplashView: View {
         }
     }
 }
+
