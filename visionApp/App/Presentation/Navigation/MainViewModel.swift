@@ -10,7 +10,7 @@ import Combine
 import AVFoundation
 
 
-class GlobalViewModel: ObservableObject {
+class MainViewModel: ObservableObject {
     @Published var selectedIllness: Illness?
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5

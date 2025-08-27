@@ -2,9 +2,9 @@ import SwiftUI
 import AVFoundation
 import Speech
 
-struct ContentView: View {
+struct MainView: View {
     @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var mainViewModel: MainViewModel
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
 
     var body: some View {
@@ -17,14 +17,14 @@ struct ContentView: View {
                 case .illnessList:
                     IllnessListView()
                 case .camera:
-                    CameraView(isCardboardMode: $globalViewModel.isCardboardMode)
+                    CameraView(isCardboardMode: $mainViewModel.isCardboardMode)
                 }
             }
             // Overlay del botón para Cardboard sin afectar el layout de la vista principal
             .overlay(alignment: .bottomTrailing) {
                 if router.currentRoute == .illnessList { // En cámara ya está en el menú flotante
                     Button(action: {
-                        globalViewModel.isCardboardMode.toggle()
+                        mainViewModel.isCardboardMode.toggle()
                     }) {
                         Image(systemName: "eyeglasses")
                             .resizable()
@@ -32,7 +32,7 @@ struct ContentView: View {
                             .padding(12)
                             .background(
                                 Circle()
-                                    .fill(Color.blue.opacity(globalViewModel.isCardboardMode ? 1.0 : 0.3))
+                                    .fill(Color.blue.opacity(mainViewModel.isCardboardMode ? 1.0 : 0.3))
                             )
                             .foregroundColor(.white)
                             .shadow(radius: 4)
@@ -46,26 +46,26 @@ struct ContentView: View {
         .onAppear {
             // Si tienes lógica de voz, puedes inicializar aquí
         }
-        .onChange(of: globalViewModel.selectedIllness) {
-            if globalViewModel.selectedIllness != nil {
+        .onChange(of: mainViewModel.selectedIllness) {
+            if mainViewModel.selectedIllness != nil {
                 router.currentRoute = .camera
             }
         }
         .onChange(of: orientationObserver.orientation) {
             let isLandscape = orientationObserver.orientation.isLandscape
-            if globalViewModel.isCardboardMode && isLandscape {
-                globalViewModel.speechService.startRecognition()
+            if mainViewModel.isCardboardMode && isLandscape {
+                mainViewModel.speechService.startRecognition()
             } else {
-                globalViewModel.speechService.stopRecognition()
+                mainViewModel.speechService.stopRecognition()
             }
         }
-        .onChange(of: globalViewModel.isCardboardMode) {
-            if globalViewModel.isCardboardMode {
+        .onChange(of: mainViewModel.isCardboardMode) {
+            if mainViewModel.isCardboardMode {
                 if orientationObserver.orientation.isLandscape {
-                    globalViewModel.speechService.startRecognition()
+                    mainViewModel.speechService.startRecognition()
                 }
             } else {
-                globalViewModel.speechService.stopRecognition()
+                mainViewModel.speechService.stopRecognition()
             }
         }
     }

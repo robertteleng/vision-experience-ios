@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CameraView: View {
-    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var globalViewModel: MainViewModel
     @StateObject private var cameraViewModel = CameraViewModel()
     @State private var menuExpanded = false
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver

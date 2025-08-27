@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct IllnessListView: View {
-    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var globalViewModel: MainViewModel
     @EnvironmentObject var router: AppRouter
 
     // Lista de enfermedades usando el modelo Illness

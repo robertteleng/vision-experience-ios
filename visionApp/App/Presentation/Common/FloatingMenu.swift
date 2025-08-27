@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FloatingMenu: View {
-    @EnvironmentObject var globalViewModel: GlobalViewModel
+    @EnvironmentObject var globalViewModel: MainViewModel
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
 

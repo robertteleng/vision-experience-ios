@@ -10,13 +10,13 @@ import SwiftUI
 @main
 struct visionAppApp: App {
     var router = AppRouter()
-    var globalViewModel = GlobalViewModel()
+    var mainViewModel = MainViewModel()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
                 .environmentObject(DeviceOrientationObserver.shared)
                 .environmentObject(router)
-                .environmentObject(globalViewModel)
+                .environmentObject(mainViewModel)
         }
     }
 }
