@@ -26,32 +26,30 @@ struct SplashView: View {
                 
                 VStack {
                     
-                    // Logo centered at the bottom (should exist in bundle)
-                    if let path = Bundle.main.path(forResource: "logo-umh", ofType: "png"),
-                       let uiImage = UIImage(contentsOfFile: path) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: UIScreen.main.bounds.width * 0.2)
-                            .opacity(0.8)
-                            .padding(.bottom, 30)
-                    }
-                    Spacer()
-                    
-                    // Logo centered at the bottom (should exist in bundle)
                     if let path = Bundle.main.path(forResource: "logo-fonce", ofType: "png"),
                        let uiImage = UIImage(contentsOfFile: path) {
                         Image(uiImage: uiImage)
                             .resizable()
+                            .renderingMode(.template)
+                            .foregroundStyle(.primary)
                             .aspectRatio(contentMode: .fit)
                             .frame(width: UIScreen.main.bounds.width * 0.4)
                             .opacity(0.8)
                             .padding(.bottom, 30)
                     }
                     
+                    if let path = Bundle.main.path(forResource: "logo-umh", ofType: "png"),
+                       let uiImage = UIImage(contentsOfFile: path) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .renderingMode(.template)
+                            .foregroundStyle(.primary)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: UIScreen.main.bounds.width * 0.1)
+                            .opacity(0.8)
+                            .padding(.bottom, 30)
+                    }
                 }
-
-                
             }
         }
         .onAppear {

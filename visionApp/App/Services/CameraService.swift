@@ -76,9 +76,15 @@ class CameraService: NSObject, ObservableObject {
     /// Stop camera session
     func stopSession() {
         sessionQueue.async {
-            if !self.isConfiguringSession {
-                self.session.stopRunning()
+            guard self.session.isRunning else { return }
+            if self.isConfiguringSession {
+                // Reintentar una vez termine la configuración para evitar stopRunning entre begin/commit
+                self.sessionQueue.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.stopSession()
+                }
+                return
             }
+            self.session.stopRunning()
         }
     }
 
@@ -87,54 +93,67 @@ class CameraService: NSObject, ObservableObject {
     private func configureSession() {
         sessionQueue.async {
             self.isConfiguringSession = true
+            self.session.beginConfiguration()
+            defer {
+                self.session.commitConfiguration()
+                self.isConfiguringSession = false
+            }
+
+            self.session.sessionPreset = .high
+
+            // Remove all existing inputs
+            for input in self.session.inputs {
+                self.session.removeInput(input)
+            }
+
+            // Add camera input
+            guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+                DispatchQueue.main.async { self.error = .deviceUnavailable }
+                return // commitConfiguration occurs via defer
+            }
+
             do {
-                self.session.beginConfiguration()
-                self.session.sessionPreset = .high
-
-                // Remove all existing inputs
-                for input in self.session.inputs {
-                    self.session.removeInput(input)
-                }
-
-                // Add camera input
-                guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-                    DispatchQueue.main.async {
-                        self.error = .deviceUnavailable
-                    }
-                    self.isConfiguringSession = false
-                    return
-                }
                 let videoInput = try AVCaptureDeviceInput(device: videoDevice)
                 guard self.session.canAddInput(videoInput) else {
-                    DispatchQueue.main.async {
-                        self.error = .configurationFailed
-                    }
-                    self.isConfiguringSession = false
+                    DispatchQueue.main.async { self.error = .configurationFailed }
                     return
                 }
                 self.session.addInput(videoInput)
-
-                self.session.commitConfiguration()
-                self.isConfiguringSession = false
-                self.session.startRunning()
-                self.setupVideoOutput()
             } catch {
-                DispatchQueue.main.async {
-                    self.error = .configurationFailed
-                }
-                self.isConfiguringSession = false
+                DispatchQueue.main.async { self.error = .configurationFailed }
+                return
+            }
+
+            // Configure and add video output inside configuration to avoid races
+            if let existingOutput = self.videoOutput {
+                self.session.removeOutput(existingOutput)
+                self.videoOutput = nil
+            }
+            let videoOutput = AVCaptureVideoDataOutput()
+            videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera.frame.queue"))
+            if self.session.canAddOutput(videoOutput) {
+                self.session.addOutput(videoOutput)
+                self.videoOutput = videoOutput
+            } else {
+                DispatchQueue.main.async { self.error = .configurationFailed }
+                return
             }
         }
-    }
 
-    private func setupVideoOutput() {
-        let videoOutput = AVCaptureVideoDataOutput()
-        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera.frame.queue"))
-        if self.session.canAddOutput(videoOutput) {
-            self.session.addOutput(videoOutput)
-            self.videoOutput = videoOutput
+        // Start running after configuration is fully committed
+        sessionQueue.async {
+            guard !self.session.isRunning else { return }
+#if targetEnvironment(simulator)
+            // En simulador no arrancamos la sesión real para evitar inconsistencias
+            DispatchQueue.main.async { self.error = nil }
+#else
+            self.session.startRunning()
+#endif
         }
     }
+
+    // Outputs are configured inside configureSession() to keep begin/commit atomic.
+    private func setupVideoOutput() { /* intentionally managed in configureSession() */ }
 }
 
 extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
