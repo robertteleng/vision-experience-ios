@@ -56,7 +56,7 @@ class MainViewModel: ObservableObject {
                     self.speak("Filtro de retinopatía diabética activado")
                 // Color Blindness (Deuteranopia)
                 } else if lowercased.contains("deuteranopia") || lowercased.contains("deuteranopia") || lowercased.contains("color blindness") || lowercased.contains("daltonismo") {
-                    self.selectedIllness = Illness(name: "Color Blindness (Deuteranopia)", description: "Simula deuteranopia.", filterType: .colorBlindnessDeuteranopia)
+                    self.selectedIllness = Illness(name: "Color Blindness (Deuteranopia)", description: "Simula deuteranopia.", filterType: .deuteranopia)
                     self.speak("Filtro de deuteranopia activado")
                 // Astigmatism
                 } else if lowercased.contains("astigmatism") || lowercased.contains("astigmatismo") {
