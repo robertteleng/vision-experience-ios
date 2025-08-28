@@ -8,7 +8,10 @@ struct IllnessListView: View {
     let illnesses: [Illness] = [
         Illness(name: "Cataracts", description: "Simulates cataracts vision.", filterType: .cataracts),
         Illness(name: "Glaucoma", description: "Simulates glaucoma vision.", filterType: .glaucoma),
-        Illness(name: "Macular Degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration)
+        Illness(name: "Macular Degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration),
+        Illness(name: "Diabetic Retinopathy", description: "Simulates diabetic retinopathy artifacts.", filterType: .diabeticRetinopathy),
+        Illness(name: "Color Blindness (Deuteranopia)", description: "Simulates green cone (M) deficiency.", filterType: .colorBlindnessDeuteranopia),
+        Illness(name: "Astigmatism", description: "Simulates directional blur and ghosting.", filterType: .astigmatism)
     ]
 
     var body: some View {

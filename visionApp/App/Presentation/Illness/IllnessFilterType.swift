@@ -1,5 +1,9 @@
-import Foundation
-import SwiftUI
+//
+//  IllnessFilterType.swift
+//  visionApp
+//
+//  Created by Roberto Rojo Sahuquillo on 28/8/25.
+//
 
 enum IllnessFilterType: String, Codable, CaseIterable, Identifiable {
     case cataracts
@@ -10,11 +14,4 @@ enum IllnessFilterType: String, Codable, CaseIterable, Identifiable {
     case colorBlindnessDeuteranopia
     case astigmatism
     var id: String { rawValue }
-}
-
-struct Illness: Identifiable, Codable, Equatable {
-    var id = UUID()
-    let name: String
-    let description: String
-    let filterType: IllnessFilterType
 }

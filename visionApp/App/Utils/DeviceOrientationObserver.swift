@@ -4,7 +4,6 @@
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
-//TODO: Remove this file if not used
 
 import SwiftUI
 import Combine

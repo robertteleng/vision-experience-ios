@@ -11,12 +11,14 @@ import SwiftUI
 struct visionApp: App {
     var router = AppRouter()
     var mainViewModel = MainViewModel()
+    var filterTuningViewModel = FilterTuningViewModel()
     var body: some Scene {
         WindowGroup {
             MainView()
                 .environmentObject(DeviceOrientationObserver.shared)
                 .environmentObject(router)
                 .environmentObject(mainViewModel)
+                .environmentObject(filterTuningViewModel)
         }
     }
 }

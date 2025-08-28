@@ -1,5 +1,5 @@
 //
-//  GlobalViewModel.swift
+//  MainViewModel.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
@@ -15,26 +15,6 @@ class MainViewModel: ObservableObject {
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
-
-    // CI tuning (Cataracts) — exposed for live tweaking
-    @Published var cataractsBloomIntensityBase: Double = CIConfig.shared.cataractsBloomIntensityBase {
-        didSet { CIConfig.shared.cataractsBloomIntensityBase = cataractsBloomIntensityBase }
-    }
-    @Published var cataractsBloomIntensityScale: Double = CIConfig.shared.cataractsBloomIntensityScale {
-        didSet { CIConfig.shared.cataractsBloomIntensityScale = cataractsBloomIntensityScale }
-    }
-    @Published var cataractsBloomRadiusBase: Double = CIConfig.shared.cataractsBloomRadiusBase {
-        didSet { CIConfig.shared.cataractsBloomRadiusBase = cataractsBloomRadiusBase }
-    }
-    @Published var cataractsBloomRadiusScale: Double = CIConfig.shared.cataractsBloomRadiusScale {
-        didSet { CIConfig.shared.cataractsBloomRadiusScale = cataractsBloomRadiusScale }
-    }
-    @Published var cataractsDesaturationMax: Double = CIConfig.shared.cataractsDesaturationMax {
-        didSet { CIConfig.shared.cataractsDesaturationMax = cataractsDesaturationMax }
-    }
-    @Published var cataractsContrastDropMax: Double = CIConfig.shared.cataractsContrastDropMax {
-        didSet { CIConfig.shared.cataractsContrastDropMax = cataractsContrastDropMax }
-    }
 
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
@@ -70,6 +50,18 @@ class MainViewModel: ObservableObject {
                 } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") {
                     self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
                     self.speak("Filtro de degeneración macular activado")
+                // Diabetic Retinopathy
+                } else if lowercased.contains("retinopathy") || lowercased.contains("retinopatía") || lowercased.contains("diabetic") || lowercased.contains("diabética") {
+                    self.selectedIllness = Illness(name: "Diabetic Retinopathy", description: "Simula retinopatía diabética.", filterType: .diabeticRetinopathy)
+                    self.speak("Filtro de retinopatía diabética activado")
+                // Color Blindness (Deuteranopia)
+                } else if lowercased.contains("deuteranopia") || lowercased.contains("deuteranopia") || lowercased.contains("color blindness") || lowercased.contains("daltonismo") {
+                    self.selectedIllness = Illness(name: "Color Blindness (Deuteranopia)", description: "Simula deuteranopia.", filterType: .colorBlindnessDeuteranopia)
+                    self.speak("Filtro de deuteranopia activado")
+                // Astigmatism
+                } else if lowercased.contains("astigmatism") || lowercased.contains("astigmatismo") {
+                    self.selectedIllness = Illness(name: "Astigmatism", description: "Simula astigmatismo.", filterType: .astigmatism)
+                    self.speak("Filtro de astigmatismo activado")
                 }
             }
             .store(in: &cancellables)
