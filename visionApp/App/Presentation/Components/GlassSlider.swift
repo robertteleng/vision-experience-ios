@@ -1,16 +1,22 @@
 //
-//  Untitled.swift
+//  GlassSlider.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
-
-// Slider con fondo glass (translúcido), alineado
+//  This file defines the GlassSlider, a reusable SwiftUI component for displaying
+//  a slider with a glass (translucent) background. It is used for filter tuning and
+//  other adjustable parameters throughout the app, and adapts its width for layout alignment.
 
 import SwiftUI
 
+/// GlassSlider displays a slider with a glass-style background for filter tuning.
+/// - Adapts its width for layout alignment.
+/// - Used for adjustable parameters in overlays and tuning panels.
 struct GlassSlider: View {
+    /// The bound value for the slider.
     @Binding var value: Double
+    /// The width of the slider control.
     var width: CGFloat = 220
 
     var body: some View {

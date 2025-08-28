@@ -4,24 +4,42 @@
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
+//  This file defines the CameraView, the main camera interface for the app. It manages
+//  the display of camera frames, overlays, floating menus, and per-illness tuning panels.
+//  The view adapts to device orientation and Cardboard mode, and provides interactive
+//  controls for filter tuning and navigation.
 
 import SwiftUI
 
+/// CameraView is the main camera interface for the app.
+/// - Displays camera frames and overlays for filter tuning and illness simulation.
+/// - Adapts to device orientation and Cardboard mode.
+/// - Provides interactive controls for filter tuning and navigation.
 struct CameraView: View {
+    /// Provides access to the main application state and selected illness.
     @EnvironmentObject var globalViewModel: MainViewModel
+    /// Manages camera session and frame updates.
     @StateObject private var cameraViewModel = CameraViewModel()
+    /// Controls whether the floating menu is expanded.
     @State private var menuExpanded = false
+    /// Observes device orientation changes to adapt the UI.
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
+    /// Indicates whether Cardboard mode is active (stereoscopic view).
     @Binding var isCardboardMode: Bool
+    /// Handles navigation between screens.
     @EnvironmentObject var router: AppRouter
+    /// Provides access to filter tuning parameters for each illness.
     @EnvironmentObject var tuningVM: FilterTuningViewModel
-    // Renamed: toggle for the tuning panel (per illness)
+    /// Controls the visibility of the illness-specific tuning panel.
     @State private var showSettingsPanel = false
 
+    /// Main view body. Renders camera frames, overlays, and interactive controls.
     var body: some View {
         ZStack {
+            // Determine if the device is in landscape orientation.
             let isLandscape = orientationObserver.orientation.isLandscape
             if isLandscape {
+                // Cardboard mode: render stereoscopic left/right panels.
                 if isCardboardMode {
                     ZStack {
                         CardboardView(
@@ -30,7 +48,7 @@ struct CameraView: View {
                             centralFocus: globalViewModel.centralFocus,
                             deviceOrientation: orientationObserver.orientation
                         )
-                        // Floating menu overlay
+                        // Floating menu overlay for filter tuning and settings.
                         VStack {
                             Spacer()
                             FloatingMenu(expanded: $menuExpanded, onSettingsTap: {
@@ -43,13 +61,13 @@ struct CameraView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .zIndex(2)
-                        // Slider overlay
+                        // Slider overlay for central focus adjustment.
                         if menuExpanded {
                             BottomSliderOverlay(value: $globalViewModel.centralFocus)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                                 .zIndex(1)
                         }
-                        // Tuning overlay (per illness)
+                        // Illness-specific tuning panel overlay.
                         if showSettingsPanel {
                             IllnessTuningPanel(isPresented: $showSettingsPanel, illness: globalViewModel.selectedIllness)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -60,6 +78,7 @@ struct CameraView: View {
                     }
                     .ignoresSafeArea()
                 } else {
+                    // Standard camera view (single panel).
                     ZStack {
                         CameraImageView(
                             image: cameraViewModel.cameraService.currentFrame,
@@ -68,7 +87,7 @@ struct CameraView: View {
                             centralFocus: globalViewModel.centralFocus
                         )
                         .ignoresSafeArea()
-                        // Menú flotante y slider
+                        // Floating menu and slider overlays.
                         VStack {
                             Spacer()
                             FloatingMenu(expanded: $menuExpanded, onSettingsTap: {
@@ -86,7 +105,7 @@ struct CameraView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                                 .zIndex(1)
                         }
-                        // Tuning overlay (per illness)
+                        // Illness-specific tuning panel overlay.
                         if showSettingsPanel {
                             IllnessTuningPanel(isPresented: $showSettingsPanel, illness: globalViewModel.selectedIllness)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -98,6 +117,7 @@ struct CameraView: View {
                     .ignoresSafeArea()
                 }
             } else {
+                // Portrait mode: prompt user to rotate device for camera experience.
                 VStack {
                     Spacer()
                     Image(systemName: "iphone.landscape")
@@ -128,15 +148,22 @@ struct CameraView: View {
                 .background(Color.black.ignoresSafeArea())
             }
         }
+        // Hide tuning panel when menu is collapsed.
         .onChange(of: menuExpanded) { oldValue, newValue in
             if !newValue { showSettingsPanel = false }
         }
+        // Start camera session when view appears.
         .onAppear { cameraViewModel.startSession() }
+        // Stop camera session when view disappears.
         .onDisappear { cameraViewModel.stopSession() }
     }
 }
 
+// MARK: - Overlay and Tuning Panel Components
+
+/// BottomSliderOverlay displays a slider for adjusting the central focus value.
 private struct BottomSliderOverlay: View {
+    /// Binding to the central focus value.
     @Binding var value: Double
     var body: some View {
         VStack {
@@ -159,9 +186,14 @@ private struct BottomSliderOverlay: View {
 }
 
 // MARK: - Per-illness tuning panels
+
+/// IllnessTuningPanel displays the appropriate tuning panel for the selected illness.
 private struct IllnessTuningPanel: View {
+    /// Controls panel presentation.
     @Binding var isPresented: Bool
+    /// The selected illness for tuning.
     let illness: Illness?
+    /// Provides access to tuning parameters.
     @EnvironmentObject var tuningVM: FilterTuningViewModel
 
     var body: some View {
@@ -186,6 +218,7 @@ private struct IllnessTuningPanel: View {
     }
 }
 
+/// PanelContainer provides a styled container for tuning panels.
 private struct PanelContainer<Content: View>: View {
     let title: String
     @Binding var isPresented: Bool
@@ -213,6 +246,7 @@ private struct PanelContainer<Content: View>: View {
     }
 }
 
+/// SliderRow displays a labeled slider for a tuning parameter.
 private struct SliderRow: View {
     let title: String
     @Binding var value: Double
@@ -230,6 +264,9 @@ private struct SliderRow: View {
     }
 }
 
+// MARK: - Individual illness tuning panels
+
+/// CataractsTuningPanel provides sliders for cataracts filter parameters.
 private struct CataractsTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel
@@ -244,6 +281,7 @@ private struct CataractsTuningPanel: View {
     }
 }
 
+/// RetinopathyTuningPanel provides sliders for diabetic retinopathy filter parameters.
 private struct RetinopathyTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel
@@ -259,6 +297,7 @@ private struct RetinopathyTuningPanel: View {
     }
 }
 
+/// DeuteranopiaTuningPanel provides sliders for color blindness filter parameters.
 private struct DeuteranopiaTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel
@@ -270,6 +309,7 @@ private struct DeuteranopiaTuningPanel: View {
     }
 }
 
+/// AstigmatismTuningPanel provides sliders for astigmatism filter parameters.
 private struct AstigmatismTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel
@@ -285,6 +325,7 @@ private struct AstigmatismTuningPanel: View {
     }
 }
 
+/// GlaucomaTuningPanel provides sliders for glaucoma filter parameters.
 private struct GlaucomaTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel
@@ -299,6 +340,7 @@ private struct GlaucomaTuningPanel: View {
     }
 }
 
+/// MacularTuningPanel provides sliders for macular degeneration filter parameters.
 private struct MacularTuningPanel: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var tuningVM: FilterTuningViewModel

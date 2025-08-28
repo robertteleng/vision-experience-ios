@@ -4,19 +4,30 @@
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
+//  This file defines the FloatingMenu, a SwiftUI component for displaying a floating
+//  vertical menu with quick access icons and actions. It adapts to device orientation,
+//  provides feedback, and exposes a settings callback for advanced configuration.
 
 import SwiftUI
 
+/// FloatingMenu displays a vertical menu of quick actions and icons.
+/// - Adapts to device orientation and size class.
+/// - Provides feedback and animation on expansion/collapse.
+/// - Exposes a settings callback for advanced configuration.
 struct FloatingMenu: View {
+    /// Access to global app state and illness selection.
     @EnvironmentObject var globalViewModel: MainViewModel
+    /// Controls whether the menu is expanded.
     @Binding var expanded: Bool
+    /// Device vertical size class for adaptive layout.
     @Environment(\.verticalSizeClass) var verticalSizeClass
+    /// Optional callback for settings action.
     var onSettingsTap: (() -> Void)? = nil
 
-    // Anchoring width so other overlays (e.g., bottom slider bar) can align to the menu's right edge
+    /// Static width for menu alignment and overlay positioning.
     static let menuWidth: CGFloat = 56 // icon (24) + internal spacing and safe touch area
 
-    // Slider width adaptativo
+    /// Adaptive slider width based on device orientation.
     var sliderWidth: CGFloat {
         verticalSizeClass == .compact ? 340 : 220
     }
@@ -24,10 +35,10 @@ struct FloatingMenu: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             if expanded {
-                Button(action: { print("Ojo pulsado") }) {
+                Button(action: { print("Eye pressed") }) {
                     FloatingMenuIcon(systemName: "eye")
                 }
-                Button(action: { print("Alerta pulsado") }) {
+                Button(action: { print("Alert pressed") }) {
                     FloatingMenuIcon(systemName: "exclamationmark.triangle")
                 }
                 Button(action: { onSettingsTap?() }) {

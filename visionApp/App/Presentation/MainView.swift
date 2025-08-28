@@ -1,28 +1,42 @@
+//  MainView.swift
+//  visionApp
+//
+//  This file defines the main view of the application, responsible for rendering
+//  the primary navigation and handling state transitions between splash, illness list,
+//  and camera screens. It also manages overlays and device orientation changes for
+//  features such as Cardboard mode and speech recognition.
+
 import SwiftUI
 import AVFoundation
 import Speech
 
+/// MainView is the root view for navigation and state management.
+/// - Handles navigation between splash, illness list, and camera screens.
+/// - Manages overlays for Cardboard mode and device orientation changes.
 struct MainView: View {
+    /// Router for navigation state.
     @EnvironmentObject var router: AppRouter
+    /// Main view model for app state and logic.
     @EnvironmentObject var mainViewModel: MainViewModel
+    /// Observer for device orientation changes.
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
 
     var body: some View {
         NavigationView {
             ZStack {
-                // Renderiza la pantalla según el estado de navegación
+                // Renders the screen based on the current navigation route.
                 switch router.currentRoute {
                 case .splash:
-                    SplashView()
+                    SplashView() // Splash screen
                 case .illnessList:
-                    IllnessListView()
+                    IllnessListView() // List of illnesses
                 case .camera:
-                    CameraView(isCardboardMode: $mainViewModel.isCardboardMode)
+                    CameraView(isCardboardMode: $mainViewModel.isCardboardMode) // Camera screen
                 }
             }
-            // Overlay del botón para Cardboard sin afectar el layout de la vista principal
+            // Overlay for Cardboard mode button, only on illness list screen.
             .overlay(alignment: .bottomTrailing) {
-                if router.currentRoute == .illnessList { // En cámara ya está en el menú flotante
+                if router.currentRoute == .illnessList {
                     Button(action: {
                         mainViewModel.isCardboardMode.toggle()
                     }) {
@@ -44,13 +58,15 @@ struct MainView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // Si tienes lógica de voz, puedes inicializar aquí
+            // Place for initializing voice logic if needed.
         }
+        // Handles navigation to camera when an illness is selected.
         .onChange(of: mainViewModel.selectedIllness) {
             if mainViewModel.selectedIllness != nil {
                 router.currentRoute = .camera
             }
         }
+        // Handles speech recognition based on orientation and Cardboard mode.
         .onChange(of: orientationObserver.orientation) {
             let isLandscape = orientationObserver.orientation.isLandscape
             if mainViewModel.isCardboardMode && isLandscape {
@@ -59,6 +75,7 @@ struct MainView: View {
                 mainViewModel.speechService.stopRecognition()
             }
         }
+        // Handles speech recognition when Cardboard mode is toggled.
         .onChange(of: mainViewModel.isCardboardMode) {
             if mainViewModel.isCardboardMode {
                 if orientationObserver.orientation.isLandscape {
