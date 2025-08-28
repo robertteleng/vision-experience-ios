@@ -32,6 +32,10 @@ struct MainView: View {
                     IllnessListView() // List of illnesses
                 case .camera:
                     CameraView(isCardboardMode: $mainViewModel.isCardboardMode) // Camera screen
+                case .home:
+                    HomeView() // Home screen
+                case .immersiveMock:
+                    InmersiveView() // Placeholder for immersive experience
                 }
             }
             // Overlay for Cardboard mode button, only on illness list screen.
