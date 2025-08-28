@@ -51,6 +51,8 @@ class CameraService: NSObject, ObservableObject {
 
     private var isConfiguringSession = false
 
+    private let ciContext = CIContext(options: nil)
+
     // MARK: - Public Methods
 
     /// Request permission and start camera session if authorized
@@ -158,10 +160,39 @@ class CameraService: NSObject, ObservableObject {
 
 extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        // Asegurar orientación coherente con la UI
+        if #available(iOS 17.0, *) {
+            let angle: CGFloat
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                switch scene.interfaceOrientation {
+                case .landscapeLeft: angle = 90
+                case .landscapeRight: angle = 270
+                case .portraitUpsideDown: angle = 180
+                case .portrait: angle = 0
+                default: angle = 0
+                }
+            } else {
+                angle = UIDevice.current.orientation.isLandscape ? 90 : 0
+            }
+            if connection.isVideoRotationAngleSupported(angle) {
+                connection.videoRotationAngle = angle
+            }
+        } else if connection.isVideoOrientationSupported {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                switch scene.interfaceOrientation {
+                case .landscapeLeft: connection.videoOrientation = .landscapeLeft
+                case .landscapeRight: connection.videoOrientation = .landscapeRight
+                case .portraitUpsideDown: connection.videoOrientation = .portraitUpsideDown
+                default: connection.videoOrientation = .portrait
+                }
+            } else {
+                connection.videoOrientation = UIDevice.current.orientation.isLandscape ? .landscapeRight : .portrait
+            }
+        }
+
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let context = CIContext()
-        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+        if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
             let image = UIImage(cgImage: cgImage)
             DispatchQueue.main.async {
                 self.currentFrame = image

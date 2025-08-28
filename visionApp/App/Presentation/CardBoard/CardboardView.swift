@@ -11,11 +11,14 @@ struct CardboardView: View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
                 ZStack {
-                    CameraImageView(image: cameraService.currentFrame, panel: .left)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .ignoresSafeArea()
-                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .left)
-                        .ignoresSafeArea()
+                    CameraImageView(
+                        image: cameraService.currentFrame,
+                        panel: .left,
+                        illness: illness,
+                        centralFocus: centralFocus
+                    )
+                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                    .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
                         Text("No frame LEFT")
                             .foregroundColor(.white)
@@ -23,11 +26,14 @@ struct CardboardView: View {
                     }
                 }
                 ZStack {
-                    CameraImageView(image: cameraService.currentFrame, panel: .right)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .ignoresSafeArea()
-                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .right)
-                        .ignoresSafeArea()
+                    CameraImageView(
+                        image: cameraService.currentFrame,
+                        panel: .right,
+                        illness: illness,
+                        centralFocus: centralFocus
+                    )
+                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                    .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
                         Text("No frame RIGHT")
                             .foregroundColor(.white)

@@ -11,6 +11,7 @@ struct FloatingMenu: View {
     @EnvironmentObject var globalViewModel: MainViewModel
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
+    var onSettingsTap: (() -> Void)? = nil
 
     // Anchoring width so other overlays (e.g., bottom slider bar) can align to the menu's right edge
     static let menuWidth: CGFloat = 56 // icon (24) + internal spacing and safe touch area
@@ -29,7 +30,7 @@ struct FloatingMenu: View {
                 Button(action: { print("Alerta pulsado") }) {
                     FloatingMenuIcon(systemName: "exclamationmark.triangle")
                 }
-                Button(action: { print("Gear pulsado") }) {
+                Button(action: { onSettingsTap?() }) {
                     FloatingMenuIcon(systemName: "gear")
                 }
                 // Cardboard glasses icon button

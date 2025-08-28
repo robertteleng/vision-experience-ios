@@ -16,6 +16,26 @@ class MainViewModel: ObservableObject {
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
 
+    // CI tuning (Cataracts) — exposed for live tweaking
+    @Published var cataractsBloomIntensityBase: Double = CIConfig.shared.cataractsBloomIntensityBase {
+        didSet { CIConfig.shared.cataractsBloomIntensityBase = cataractsBloomIntensityBase }
+    }
+    @Published var cataractsBloomIntensityScale: Double = CIConfig.shared.cataractsBloomIntensityScale {
+        didSet { CIConfig.shared.cataractsBloomIntensityScale = cataractsBloomIntensityScale }
+    }
+    @Published var cataractsBloomRadiusBase: Double = CIConfig.shared.cataractsBloomRadiusBase {
+        didSet { CIConfig.shared.cataractsBloomRadiusBase = cataractsBloomRadiusBase }
+    }
+    @Published var cataractsBloomRadiusScale: Double = CIConfig.shared.cataractsBloomRadiusScale {
+        didSet { CIConfig.shared.cataractsBloomRadiusScale = cataractsBloomRadiusScale }
+    }
+    @Published var cataractsDesaturationMax: Double = CIConfig.shared.cataractsDesaturationMax {
+        didSet { CIConfig.shared.cataractsDesaturationMax = cataractsDesaturationMax }
+    }
+    @Published var cataractsContrastDropMax: Double = CIConfig.shared.cataractsContrastDropMax {
+        didSet { CIConfig.shared.cataractsContrastDropMax = cataractsContrastDropMax }
+    }
+
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
 

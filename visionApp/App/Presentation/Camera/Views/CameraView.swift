@@ -38,31 +38,23 @@ struct CameraView: View {
                         .zIndex(2)
                         // Slider overlay
                         if menuExpanded {
-                            VStack {
-                                Spacer()
-                                HStack(spacing: 0) {
-                                    Spacer().frame(width: 68)
-                                    GlassSlider(
-                                        value: $globalViewModel.centralFocus,
-                                        width: UIScreen.main.bounds.width - 68 - 32
-                                    )
-                                    .frame(height: 32)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .bottom)
-                                .padding(.bottom, 12)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .zIndex(1)
+                            BottomSliderOverlay(value: $globalViewModel.centralFocus)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                                .zIndex(1)
                         }
                     }
                     .ignoresSafeArea()
                 } else {
                     ZStack {
-                        CameraPreviewView(session: cameraViewModel.cameraService.session)
-                            .ignoresSafeArea()
-                        ColorOverlay(illness: globalViewModel.selectedIllness, centralFocus: globalViewModel.centralFocus)
-                            .ignoresSafeArea()
-                        // Floating menu overlay (non-Cardboard)
+                        // Reemplazamos preview layer + overlay por procesamiento CI en una sola vista
+                        CameraImageView(
+                            image: cameraViewModel.cameraService.currentFrame,
+                            panel: .full,
+                            illness: globalViewModel.selectedIllness,
+                            centralFocus: globalViewModel.centralFocus
+                        )
+                        .ignoresSafeArea()
+                        // Menú flotante y slider
                         VStack {
                             Spacer()
                             FloatingMenu(expanded: $menuExpanded)
@@ -71,23 +63,10 @@ struct CameraView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .zIndex(2)
-                        // Slider overlay (non-Cardboard)
                         if menuExpanded {
-                            VStack {
-                                Spacer()
-                                HStack(spacing: 0) {
-                                    Spacer().frame(width: 68)
-                                    GlassSlider(
-                                        value: $globalViewModel.centralFocus,
-                                        width: UIScreen.main.bounds.width - 68 - 32
-                                    )
-                                    .frame(height: 32)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .bottom)
-                                .padding(.bottom, 12)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .zIndex(1)
+                            BottomSliderOverlay(value: $globalViewModel.centralFocus)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                                .zIndex(1)
                         }
                     }
                     .ignoresSafeArea()
@@ -130,6 +109,32 @@ struct CameraView: View {
         .onDisappear {
             cameraViewModel.stopSession()
         }
+    }
+}
+
+private struct BottomSliderOverlay: View {
+    @Binding var value: Double
+
+    var body: some View {
+        VStack {
+            Spacer()
+            GeometryReader { geo in
+                let leftInset = 12 + FloatingMenu.menuWidth + 12 // leading padding + menu width + gap
+                let rightInset: CGFloat = 12
+                HStack(spacing: 0) {
+                    Spacer().frame(width: leftInset)
+                    GlassSlider(
+                        value: $value,
+                        width: max(0, geo.size.width - leftInset - rightInset)
+                    )
+                    .frame(height: 32)
+                }
+                .frame(maxWidth: .infinity, alignment: .bottomLeading)
+            }
+            .frame(height: 32)
+            .padding(.bottom, 12)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 }
 
