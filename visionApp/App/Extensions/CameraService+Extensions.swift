@@ -11,8 +11,9 @@ import UIKit
 extension CameraService {
     func updateVideoOrientation(deviceOrientation: UIDeviceOrientation) {
         guard let connection = self.session.connections.first else { return }
-        // iOS 17+: Use videoRotationAngle (in degrees)
+
         if #available(iOS 17.0, *) {
+            // iOS 17+: usar únicamente videoRotationAngle (grados)
             switch deviceOrientation {
             case .landscapeLeft:
                 connection.videoRotationAngle = 270.0
@@ -26,23 +27,20 @@ extension CameraService {
                 break
             }
         } else {
-            // Fallback for iOS < 17: Use transform
-            var angle: CGFloat = 0.0
+            // iOS < 17: usar únicamente videoOrientation (sin transforms manuales)
+            guard connection.isVideoOrientationSupported else { return }
             switch deviceOrientation {
             case .landscapeLeft:
-                angle = CGFloat.pi * 1.5
+                connection.videoOrientation = .landscapeLeft
             case .landscapeRight:
-                angle = CGFloat.pi / 2
+                connection.videoOrientation = .landscapeRight
             case .portrait:
-                angle = 0.0
+                connection.videoOrientation = .portrait
             case .portraitUpsideDown:
-                angle = CGFloat.pi
+                connection.videoOrientation = .portraitUpsideDown
             default:
+                // Mantener la orientación actual si es desconocida/faceUp/faceDown
                 break
-            }
-            connection.videoOrientation = .portrait // Keep portrait for compatibility
-            if let previewLayer = connection.videoPreviewLayer {
-                previewLayer.setAffineTransform(CGAffineTransform(rotationAngle: angle))
             }
         }
     }

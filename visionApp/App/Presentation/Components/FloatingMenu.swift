@@ -19,6 +19,7 @@ struct FloatingMenu: View {
     var sliderWidth: CGFloat {
         verticalSizeClass == .compact ? 340 : 220
     }
+    private let sliderHeight: CGFloat = 32
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -54,6 +55,16 @@ struct FloatingMenu: View {
         }
         .frame(width: FloatingMenu.menuWidth, alignment: .leading)
         .padding(.bottom, 12)
+        // Slider overlay aligned to the right edge of the menu when expanded
+        .overlay(alignment: .bottomLeading) {
+            if expanded {
+                GlassSlider(value: $globalViewModel.centralFocus, width: sliderWidth)
+                    .offset(
+                        x: FloatingMenu.menuWidth,
+                        y: -((FloatingMenu.menuWidth - sliderHeight) / 2)
+                    )
+            }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
     }
 }

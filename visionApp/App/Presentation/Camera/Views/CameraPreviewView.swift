@@ -5,12 +5,13 @@
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
 //  SwiftUI wrapper around AVCaptureVideoPreviewLayer to display the camera
-//  preview. It fills its container and keeps the video oriented with the UI.
+//  preview. It fills its container. Orientation is managed exclusively by
+//  CameraService.
 //
 
 import SwiftUI
 import AVFoundation
-import UIKit
+//import UIKit
 
 struct CameraPreviewView: UIViewRepresentable {
     let session: AVCaptureSession
@@ -19,8 +20,6 @@ struct CameraPreviewView: UIViewRepresentable {
         let view = PreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
-        // Ensure initial orientation
-        view.updateOrientation()
         return view
     }
 
@@ -28,12 +27,11 @@ struct CameraPreviewView: UIViewRepresentable {
         if uiView.videoPreviewLayer.session !== session {
             uiView.videoPreviewLayer.session = session
         }
-        // Keep orientation in sync on updates/layout changes
-        uiView.updateOrientation()
+        // Orientation is handled by CameraService. No changes here.
     }
 
     static func dismantleUIView(_ uiView: PreviewView, coordinator: ()) {
-        NotificationCenter.default.removeObserver(uiView)
+        // No observers added here anymore.
     }
 }
 
@@ -53,57 +51,11 @@ final class PreviewView: UIView {
 
     private func commonInit() {
         videoPreviewLayer.videoGravity = .resizeAspectFill
-        NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        // No orientation observation here; CameraService is the source of truth.
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
         videoPreviewLayer.frame = bounds
-        // Adjust on layout in case bounds changed due to rotation/UI changes
-        updateOrientation()
-    }
-
-    @objc private func orientationDidChange() {
-        updateOrientation()
-    }
-
-    func updateOrientation() {
-        guard let connection = videoPreviewLayer.connection else { return }
-        let io: UIInterfaceOrientation
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            io = scene.interfaceOrientation
-        } else {
-            switch UIDevice.current.orientation {
-            case .landscapeLeft: io = .landscapeLeft
-            case .landscapeRight: io = .landscapeRight
-            case .portraitUpsideDown: io = .portraitUpsideDown
-            case .portrait: io = .portrait
-            default: io = .portrait
-            }
-        }
-        if #available(iOS 17.0, *) {
-            let angle: CGFloat
-            switch io {
-            case .landscapeLeft: angle = 90
-            case .landscapeRight: angle = 270
-            case .portraitUpsideDown: angle = 180
-            case .portrait: angle = 0
-            default: angle = 0
-            }
-            if connection.isVideoRotationAngleSupported(angle) {
-                connection.videoRotationAngle = angle
-            }
-        } else if connection.isVideoOrientationSupported {
-            switch io {
-            case .landscapeLeft: connection.videoOrientation = .landscapeLeft
-            case .landscapeRight: connection.videoOrientation = .landscapeRight
-            case .portraitUpsideDown: connection.videoOrientation = .portraitUpsideDown
-            default: connection.videoOrientation = .portrait
-            }
-        }
     }
 }

@@ -7,20 +7,26 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 class CameraViewModel: ObservableObject {
-    @Published var currentFrame: UIImage?
+    @Published var currentFrame: CGImage?
     @Published var error: CameraError?
     
     let cameraService = CameraService() // Cambiado de private a internal
     
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
         cameraService.$currentFrame
             .receive(on: DispatchQueue.main)
-            .assign(to: &$currentFrame)
+            .assign(to: \.currentFrame, on: self)
+            .store(in: &cancellables)
+        
         cameraService.$error
             .receive(on: DispatchQueue.main)
-            .assign(to: &$error)
+            .assign(to: \.error, on: self)
+            .store(in: &cancellables)
     }
     
     func startSession() {

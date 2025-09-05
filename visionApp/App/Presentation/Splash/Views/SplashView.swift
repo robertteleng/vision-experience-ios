@@ -10,55 +10,101 @@ import Lottie
 
 struct SplashView: View {
     @EnvironmentObject var router: AppRouter
+    @EnvironmentObject var orientationObserver: DeviceOrientationObserver
     @State private var animate = false
 
     var body: some View {
-        ZStack {
-            VStack {
-                Spacer()
-                // Lottie animation centered on the screen
-                LottieView(animationName: "eyeAnimation", loopMode: .loop)
-                    .frame(width: 200, height: 200)
-                    .opacity(animate ? 1 : 0)
-                    .animation(Animation.easeIn(duration: 1.0), value: animate)
-
-                Spacer()
-                
-                VStack {
-                    
-                    if let path = Bundle.main.path(forResource: "logo-fonce", ofType: "png"),
-                       let uiImage = UIImage(contentsOfFile: path) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .renderingMode(.template)
-                            .foregroundStyle(.primary)
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: UIScreen.main.bounds.width * 0.4)
-                            .opacity(0.8)
-                            .padding(.bottom, 30)
-                    }
-                    
-                    if let path = Bundle.main.path(forResource: "logo-umh", ofType: "png"),
-                       let uiImage = UIImage(contentsOfFile: path) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .renderingMode(.template)
-                            .foregroundStyle(.primary)
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: UIScreen.main.bounds.width * 0.1)
-                            .opacity(0.8)
-                            .padding(.bottom, 30)
-                    }
-                }
+        
+        // When in landscape show logos side by side, otherwise show logos above the animation
+        Group {
+            if (orientationObserver.orientation.isLandscape) {
+                LandscapeSplashView()
+            } else {
+                PortraitSplashView()
             }
-        }
-        .onAppear {
+        }.onAppear {
             animate = true
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            // Use SwiftUI haptics
+            let generator = UISelectionFeedbackGenerator()
+            generator.selectionChanged()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 router.currentRoute = .illnessList
             }
         }
     }
 }
 
+#Preview {
+    SplashView()
+        .environmentObject(AppRouter())
+        .environmentObject(DeviceOrientationObserver.shared)
+}
+
+
+struct PortraitSplashView: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Spacer(minLength: 150)
+            // Once logo 150px height
+            HStack(spacing: 20) {
+                Image("logo-fonce")
+                    .resizable()
+                    .renderingMode(.template)
+                    .foregroundStyle(.primary)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: UIScreen.main.bounds.width * 0.4)
+                    .opacity(0.8)
+                    .padding(.bottom, 30)
+                Image("logo-umh")
+                    .resizable()
+                    .renderingMode(.template)
+                    .foregroundStyle(.primary)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: UIScreen.main.bounds.width * 0.1)
+                    .opacity(0.8)
+                    .padding(.bottom, 30)
+            }
+            .frame(width: UIScreen.main.bounds.width, height: 150)
+            
+            // Lottie animation filling the rest of the screen
+            LottieView(animationName: "eyeAnimation", loopMode: .loop)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+#Preview {
+    PortraitSplashView()
+        .environmentObject(AppRouter())
+        .environmentObject(DeviceOrientationObserver.shared)
+}
+
+struct LandscapeSplashView: View {
+    var body: some View {
+        HStack(spacing: 20) {
+            Image("logo-fonce")
+                .resizable()
+                .renderingMode(.template)
+                .foregroundStyle(.primary)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: UIScreen.main.bounds.width * 0.4)
+                .opacity(0.8)
+                .padding(.bottom, 30)
+            Image("logo-umh")
+                .resizable()
+                .renderingMode(.template)
+                .foregroundStyle(.primary)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: UIScreen.main.bounds.width * 0.1)
+                .opacity(0.8)
+                .padding(.bottom, 30)
+        }
+        .frame(width: UIScreen.main.bounds.width, height: 150)
+    }
+}
+
+#Preview {
+    LandscapeSplashView()
+        .environmentObject(AppRouter())
+        .environmentObject(DeviceOrientationObserver.shared)
+}

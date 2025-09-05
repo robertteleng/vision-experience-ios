@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+//import App.Presentation.Components.Panel // Import shared Panel enum
 
 struct CardboardView: View {
     @ObservedObject var cameraService: CameraService
@@ -11,9 +12,14 @@ struct CardboardView: View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
                 ZStack {
-                    CameraImageView(image: cameraService.currentFrame, panel: .left)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .ignoresSafeArea()
+                    CameraImageView(
+                        image: cameraService.currentFrame,
+                        panel: .left, // Use shared Panel enum
+                        illness: illness,
+                        centralFocus: centralFocus
+                )
+                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                    .ignoresSafeArea()
                     ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .left)
                         .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
@@ -23,9 +29,14 @@ struct CardboardView: View {
                     }
                 }
                 ZStack {
-                    CameraImageView(image: cameraService.currentFrame, panel: .right)
-                        .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                        .ignoresSafeArea()
+                    CameraImageView(
+                        image: cameraService.currentFrame,
+                        panel: .right, // Use shared Panel enum
+                        illness: illness,
+                        centralFocus: centralFocus
+                    )
+                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                    .ignoresSafeArea()
                     ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .right)
                         .ignoresSafeArea()
                     if cameraService.currentFrame == nil {
@@ -38,4 +49,14 @@ struct CardboardView: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
+}
+
+// Cataracts preview
+#Preview {
+    CardboardView(
+        cameraService: CameraViewModel().cameraService,
+        illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
+        centralFocus: 20,
+        deviceOrientation: .portrait
+    )
 }

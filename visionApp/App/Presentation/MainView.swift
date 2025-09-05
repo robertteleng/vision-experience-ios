@@ -70,3 +70,10 @@ struct MainView: View {
         }
     }
 }
+
+#Preview {
+    MainView()
+        .environmentObject(AppRouter())
+        .environmentObject(MainViewModel())
+        .environmentObject(DeviceOrientationObserver.shared)
+}

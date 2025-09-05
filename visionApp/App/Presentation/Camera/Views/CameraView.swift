@@ -4,95 +4,83 @@
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
+//  This file defines the CameraView, the main camera interface for the app. It manages
+//  the display of camera frames, overlays, and the floating menu.
+//  The view adapts to device orientation and Cardboard mode, and provides interactive
+//  controls for navigation.
 
 import SwiftUI
 
+/// CameraView is the main camera interface for the app.
+/// - Displays camera frames and overlays for illness simulation.
+/// - Adapts to device orientation and Cardboard mode.
+/// - Provides interactive controls for navigation.
 struct CameraView: View {
+    /// Provides access to the main application state and selected illness.
     @EnvironmentObject var globalViewModel: MainViewModel
+    /// Manages camera session and frame updates.
     @StateObject private var cameraViewModel = CameraViewModel()
+    /// Controls whether the floating menu is expanded.
     @State private var menuExpanded = false
+    /// Observes device orientation changes to adapt the UI.
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
+    /// Indicates whether Cardboard mode is active (stereoscopic view).
     @Binding var isCardboardMode: Bool
+    /// Handles navigation between screens.
     @EnvironmentObject var router: AppRouter
 
     var body: some View {
         ZStack {
+            // Determine if the device is in landscape orientation.
             let isLandscape = orientationObserver.orientation.isLandscape
             if isLandscape {
+                // Cardboard mode: render stereoscopic left/right panels.
                 if isCardboardMode {
                     ZStack {
+                        // Capa de imagen con efecto estereoscópico
                         CardboardView(
                             cameraService: cameraViewModel.cameraService,
                             illness: globalViewModel.selectedIllness,
                             centralFocus: globalViewModel.centralFocus,
                             deviceOrientation: orientationObserver.orientation
                         )
-                        // Floating menu overlay
+                        .ignoresSafeArea() // solo la imagen ignora safe area
+
+                        // Floating menu overlay (respeta safe area)
                         VStack {
                             Spacer()
                             FloatingMenu(expanded: $menuExpanded)
-                                .padding(.leading, 12)
-                                .padding(.bottom, 12)
+                                .padding(.leading, 16)
+                                .padding(.bottom, 16)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .zIndex(2)
-                        // Slider overlay
-                        if menuExpanded {
-                            VStack {
-                                Spacer()
-                                HStack(spacing: 0) {
-                                    Spacer().frame(width: 68)
-                                    GlassSlider(
-                                        value: $globalViewModel.centralFocus,
-                                        width: UIScreen.main.bounds.width - 68 - 32
-                                    )
-                                    .frame(height: 32)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .bottom)
-                                .padding(.bottom, 12)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .zIndex(1)
-                        }
                     }
-                    .ignoresSafeArea()
                 } else {
+                    // Standard camera view (single panel).
                     ZStack {
-                        CameraPreviewView(session: cameraViewModel.cameraService.session)
-                            .ignoresSafeArea()
-                        ColorOverlay(illness: globalViewModel.selectedIllness, centralFocus: globalViewModel.centralFocus)
-                            .ignoresSafeArea()
-                        // Floating menu overlay (non-Cardboard)
+                        // Capa de imagen con filtros (rotación corregida en CameraImageView)
+                        CameraImageView(
+                            image: cameraViewModel.cameraService.currentFrame,
+                            panel: .full,
+                            illness: globalViewModel.selectedIllness,
+                            centralFocus: globalViewModel.centralFocus
+                        )
+                        .ignoresSafeArea() // solo la imagen ignora safe area
+
+                        // Floating menu overlay (respeta safe area)
                         VStack {
                             Spacer()
                             FloatingMenu(expanded: $menuExpanded)
-                                .padding(.leading, 12)
-                                .padding(.bottom, 12)
+                                .padding(.leading, 16)
+                                .padding(.bottom, 16)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .zIndex(2)
-                        // Slider overlay (non-Cardboard)
-                        if menuExpanded {
-                            VStack {
-                                Spacer()
-                                HStack(spacing: 0) {
-                                    Spacer().frame(width: 68)
-                                    GlassSlider(
-                                        value: $globalViewModel.centralFocus,
-                                        width: UIScreen.main.bounds.width - 68 - 32
-                                    )
-                                    .frame(height: 32)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .bottom)
-                                .padding(.bottom, 12)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .zIndex(1)
-                        }
                     }
-                    .ignoresSafeArea()
                 }
             } else {
+                // Portrait mode: prompt user to rotate device for camera experience.
                 VStack {
                     Spacer()
                     Image(systemName: "iphone.landscape")
@@ -107,9 +95,10 @@ struct CameraView: View {
                         .padding(.bottom, 20)
                         .multilineTextAlignment(.center)
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        // Removed UIKit feedback, use SwiftUI haptics
+                        let generator = UISelectionFeedbackGenerator()
+                        generator.selectionChanged()
                         router.currentRoute = .illnessList
-                        // Si tienes lógica de voz, puedes detenerla aquí
                     }) {
                         Image(systemName: "chevron.left.circle")
                             .resizable()
@@ -124,18 +113,18 @@ struct CameraView: View {
                 .background(Color.black.ignoresSafeArea())
             }
         }
+        // Start camera session when view appears.
         .onAppear {
             cameraViewModel.startSession()
         }
-        .onDisappear {
-            cameraViewModel.stopSession()
-        }
+        // Stop camera session when view disappears.
+        .onDisappear { cameraViewModel.stopSession() }
     }
 }
 
-//struct CameraView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        CameraView(navigationViewModel: NavigationViewModel())
-//            .previewLayout(.fixed(width: 400, height: 800))
-//    }
-//}
+#Preview {
+    CameraView(isCardboardMode: .constant(false))
+        .environmentObject(MainViewModel())
+        .environmentObject(AppRouter())
+        .environmentObject(DeviceOrientationObserver.shared)
+}

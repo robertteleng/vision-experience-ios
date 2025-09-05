@@ -50,6 +50,10 @@ class MainViewModel: ObservableObject {
                 } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") {
                     self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
                     self.speak("Filtro de degeneración macular activado")
+                // Tunnel Vision
+                } else if lowercased.contains("tunnel vision") || lowercased.contains("visión de túnel") || lowercased.contains("vision de tunel") || lowercased.contains("tunel") {
+                    self.selectedIllness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
+                    self.speak("Filtro de visión en túnel activado")
                 }
             }
             .store(in: &cancellables)
