@@ -7,49 +7,52 @@ struct CardboardView: View {
     let illness: Illness?
     let centralFocus: Double
     @State var deviceOrientation: UIDeviceOrientation
-
+    
     var body: some View {
         GeometryReader { geometry in
-            HStack(spacing: 0) {
+            HStack(spacing: 10) { // Cambiar spacing a 0
+                // Panel izquierdo
                 ZStack {
                     CameraImageView(
                         image: cameraService.currentFrame,
-                        panel: .left, // Use shared Panel enum
+                        panel: .left,
                         illness: illness,
                         centralFocus: centralFocus
-                )
-                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                    .ignoresSafeArea()
+                    )
                     ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .left)
-                        .ignoresSafeArea()
+                    
                     if cameraService.currentFrame == nil {
                         Text("No frame LEFT")
                             .foregroundColor(.white)
                             .background(Color.red)
                     }
                 }
+                .frame(width: geometry.size.width / 2, height: geometry.size.height)
+                
+                // Panel derecho
                 ZStack {
                     CameraImageView(
                         image: cameraService.currentFrame,
-                        panel: .right, // Use shared Panel enum
+                        panel: .right,
                         illness: illness,
                         centralFocus: centralFocus
                     )
-                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                    .ignoresSafeArea()
                     ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .right)
-                        .ignoresSafeArea()
+                    
                     if cameraService.currentFrame == nil {
                         Text("No frame RIGHT")
                             .foregroundColor(.white)
                             .background(Color.blue)
                     }
                 }
+                .frame(width: geometry.size.width / 2, height: geometry.size.height)
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
         }
+        .ignoresSafeArea(.all) // Ignorar TODAS las safe areas
+        .statusBar(hidden: true) // Ocultar la barra de estado si es necesario
     }
 }
+
 
 // Cataracts preview
 #Preview {
