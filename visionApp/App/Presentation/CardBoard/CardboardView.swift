@@ -10,7 +10,7 @@ struct CardboardView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            HStack(spacing: 10) { // Cambiar spacing a 0
+            HStack(spacing: 0) { // Cambiar spacing a 0
                 // Panel izquierdo
                 ZStack {
                     CameraImageView(

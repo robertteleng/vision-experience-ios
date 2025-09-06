@@ -3,14 +3,16 @@ import Foundation
 
 struct ColorOverlay: View {
     let illness: Illness?
-    var centralFocus: Double = 0.5
+//    var centralFocus: Double = 0.5
+    var centralFocus: Double = 0.0
     var panel: Panel = .left
 
     // Optional per-panel center offset to match CameraImageView processing
     private func centerOffsetNormalized(for panel: Panel) -> CGPoint {
         switch panel {
         case .left:
-            return CGPoint(x: -0.03, y: 0.0)
+//            return CGPoint(x: -0.03, y: 0.0)
+            return CGPoint(x: 0.0, y: 0.0)
         case .right:
             return CGPoint(x: 0.0, y: 0.0)
         case .full:
