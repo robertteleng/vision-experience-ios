@@ -118,53 +118,19 @@ final class CIProcessor {
             
         case .glaucoma:
         
-            // Define el radio de desenfoque y el color negro en función de clampedFocus
-            let blurRadius = CGFloat(clampedFocus * 20) // Puedes ajustar el valor 20 para cambiar la intensidad del desenfoque
-            let blackAmount = CGFloat(clampedFocus) // La cantidad de negro dependiendo de clampedFocus
+            let vignette = CIFilter.vignette()
+            vignette.inputImage = inputCI
+            vignette.intensity = Float(0.8 + clampedFocus * 1.2)
+            vignette.radius = Float(0.8 + clampedFocus * 1.0)
+            let first = vignette.outputImage ?? inputCI
 
-            // Aplica el desenfoque gaussiano
-            let blurFilter = CIFilter(name: "CIGaussianBlur")!
-            blurFilter.setValue(inputCI, forKey: kCIInputImageKey)
-            blurFilter.setValue(blurRadius, forKey: kCIInputRadiusKey)
-            
-            guard let blurredImage = blurFilter.outputImage else {
-                print("Error: No se pudo crear la imagen desenfocada.")
-                return context.createCGImage(inputCI, from: inputCI.extent) ?? image
-            }
-
-            // Crea una máscara circular
-            guard let mask = CIFilter(name: "CIRadialGradient") else {
-                print("Error: No se pudo crear el filtro CIRadialGradient.")
-                return context.createCGImage(inputCI, from: inputCI.extent) ?? image
-            }
-
-            mask.setValue(CIVector(x: inputCI.extent.midX, y: inputCI.extent.midY), forKey: "inputCenter")
-            mask.setValue(min(1.0, clampedFocus * 0.5), forKey: "inputRadius0") // Radio interno
-            mask.setValue(min(1.0, clampedFocus), forKey: "inputRadius1") // Radio externo
-            mask.setValue(CIColor(red: 0, green: 0, blue: 0, alpha: blackAmount), forKey: "inputColor0")
-            mask.setValue(CIColor(red: 1, green: 1, blue: 1, alpha: 0), forKey: "inputColor1")
-
-            guard let radialGradient = mask.outputImage?.cropped(to: inputCI.extent) else {
-                print("Error: No se pudo crear la imagen de gradiente radial.")
-                return context.createCGImage(inputCI, from: inputCI.extent) ?? image
-            }
-
-            // Mezcla la imagen original y la desenfocada utilizando la máscara
-            let blendedFilter = CIFilter(name: "CIBlendWithAlphaMask")!
-            blendedFilter.setValue(blurredImage, forKey: kCIInputImageKey)
-            blendedFilter.setValue(inputCI, forKey: kCIInputBackgroundImageKey)
-            blendedFilter.setValue(radialGradient, forKey: kCIInputMaskImageKey)
-
-            // Obtener la imagen final
-            guard let outputImage = blendedFilter.outputImage else {
-                print("Error: No se pudo crear la imagen final.")
-                return context.createCGImage(inputCI, from: inputCI.extent) ?? image
-            }
-            
-            outputCI = outputImage
-
-
-
+            let vignetteEffect = CIFilter.vignetteEffect()
+            vignetteEffect.inputImage = first
+            vignetteEffect.center = effectCenter
+            let minSide = min(inputCI.extent.width, inputCI.extent.height)
+            vignetteEffect.radius = Float(minSide * (2 * (1.0 - clampedFocus)))
+            vignetteEffect.intensity = Float(0.7 + 0.8 * clampedFocus)
+            outputCI = vignetteEffect.outputImage ?? first
 
 
         case .macularDegeneration:
