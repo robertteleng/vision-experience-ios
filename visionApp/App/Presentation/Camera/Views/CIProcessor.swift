@@ -121,6 +121,7 @@ final class CIProcessor {
             outputCI = blend.outputImage ?? inputCI // Establece la imagen de salida
         
         case .tunnelVision: // Efectos para la visión túnel
+                            
             let minSide = min(inputCI.extent.width, inputCI.extent.height) // Encuentra el lado más corto de la imagen
 
             // Radio mínimo del túnel (aproximadamente 1 cm como porcentaje del lado más corto)
@@ -128,7 +129,7 @@ final class CIProcessor {
             let minTunnelRadius = minSide * minTunnelRadiusPercentage // Calcula el radio mínimo en píxeles
 
             // Radio máximo del túnel (toda la imagen)
-            let maxTunnelRadius = minSide / 2.0  // La mitad del lado más corto
+            let maxTunnelRadius = minSide / 1.6  // Un poco menos que la mitad del lado más corto
 
             // Convertir el clampedFocus en un radio que podemos aplicar al túnel
             let tunnelRadius = minTunnelRadius + (maxTunnelRadius - minTunnelRadius) * (1-clampedFocus) // Radio ajustado
@@ -172,4 +173,5 @@ final class CIProcessor {
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image
     }
 }
+
 
