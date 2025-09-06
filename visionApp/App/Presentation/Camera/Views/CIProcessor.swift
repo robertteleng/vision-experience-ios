@@ -83,8 +83,8 @@ final class CIProcessor {
 
         case .macularDegeneration: // Efectos para la degeneración macular
             let minSide = min(inputCI.extent.width, inputCI.extent.height) // Encuentra el lado más corto de la imagen
-            let innerRadius = CGFloat(10 + clampedFocus * 60) // Radio interno ajustable
-            let outerRadius = CGFloat(innerRadius + minSide * (0.2 + 0.25 * clampedFocus)) // Radio externo ajustable
+            let innerRadius = CGFloat(clampedFocus * 60) // Radio interno ajustable
+            let outerRadius = CGFloat(innerRadius + minSide * (0.5 * clampedFocus)) // Radio externo ajustable
             
             // 1. Creamos un gradiente radial
             let radial = CIFilter.radialGradient() // Crea un filtro de gradiente radial
@@ -98,14 +98,14 @@ final class CIProcessor {
             // 2. Aplicamos desenfoque a la imagen original
             let blurFilter = CIFilter.gaussianBlur() // Crea un filtro de desenfoque
             blurFilter.inputImage = inputCI // Asigna la imagen original
-            blurFilter.radius = Float(clampedFocus * 10) // Ajusta el radio de desenfoque según el foco
+            blurFilter.radius = Float(clampedFocus * 5) // Ajusta el radio de desenfoque según el foco
             let blurredImage = blurFilter.outputImage?.clamped(to: inputCI.extent) ?? inputCI // Limita el desenfoque a los bordes de la imagen
             
             // 3. Oscurecer la imagen
             let darkColor = CIColor(red: 0, green: 0, blue: 0, alpha: 0.65) // Color oscuro con cierta opacidad
             let darkOverlay = CIImage(color: darkColor).cropped(to: inputCI.extent) // Crea una capa oscura
             
-            // 4. Crea un efecto de distorsión central, como el del glaucoma
+            // 4. Crea un efecto de distorsión central
             let distortion = CIFilter.twirlDistortion() // Crea un filtro de distorsión
             distortion.inputImage = gradient // Asigna el gradiente como entrada
             distortion.center = CGPoint(x: effectCenter.x, y: effectCenter.y) // Establece el centro de distorsión
