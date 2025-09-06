@@ -11,7 +11,7 @@ import AVFoundation
 
 
 class MainViewModel: ObservableObject {
-    @Published var selectedIllness: Illness?
+    @Published var selectedIllness: Illness? = Illness(name: "Prueba", description: "Prueba", filterType: .glaucoma)
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
