@@ -12,6 +12,6 @@ enum AppRoute {
 }
 
 class AppRouter: ObservableObject {
-    @Published var currentRoute: AppRoute = .camera
+    @Published var currentRoute: AppRoute = .illnessList
     // Métodos para navegar, push/pop, etc. si lo necesitas
 }
