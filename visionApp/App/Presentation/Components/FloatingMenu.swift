@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FloatingMenu: View {
     @EnvironmentObject var globalViewModel: MainViewModel
+    @EnvironmentObject var router: AppRouter
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
@@ -24,14 +25,10 @@ struct FloatingMenu: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             if expanded {
-                Button(action: { print("Ojo pulsado") }) {
-                    FloatingMenuIcon(systemName: "eye")
-                }
-                Button(action: { print("Alerta pulsado") }) {
-                    FloatingMenuIcon(systemName: "exclamationmark.triangle")
-                }
-                Button(action: { print("Gear pulsado") }) {
-                    FloatingMenuIcon(systemName: "gear")
+                Button(action: {
+                    router.currentRoute = .illnessList
+                }) {
+                    FloatingMenuIcon(systemName: "list.bullet")
                 }
                 // Cardboard glasses icon button
                 Button(action: {
@@ -69,11 +66,9 @@ struct FloatingMenu: View {
     }
 }
 
-//struct FloatingMenu_Previews: PreviewProvider {
-//    static var previews: some View {
-//        FloatingMenu(navigationViewModel: NavigationViewModel())
-//            .previewLayout(.fixed(width: 400, height: 800))
-//        FloatingMenu(navigationViewModel: NavigationViewModel())
-//            .previewLayout(.fixed(width: 800, height: 400))
-//    }
-//}
+#Preview {
+    FloatingMenu(expanded: .constant(true))
+        .padding()
+        .background(Color.gray.opacity(0.2))
+        .environmentObject(MainViewModel())
+}

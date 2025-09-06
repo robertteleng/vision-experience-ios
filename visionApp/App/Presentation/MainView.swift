@@ -20,27 +20,6 @@ struct MainView: View {
                     CameraView(isCardboardMode: $mainViewModel.isCardboardMode)
                 }
             }
-            // Overlay del botón para Cardboard sin afectar el layout de la vista principal
-            .overlay(alignment: .bottomTrailing) {
-                if router.currentRoute == .illnessList { // En cámara ya está en el menú flotante
-                    Button(action: {
-                        mainViewModel.isCardboardMode.toggle()
-                    }) {
-                        Image(systemName: "eyeglasses")
-                            .resizable()
-                            .frame(width: 24, height: 16)
-                            .padding(12)
-                            .background(
-                                Circle()
-                                    .fill(Color.blue.opacity(mainViewModel.isCardboardMode ? 1.0 : 0.3))
-                            )
-                            .foregroundColor(.white)
-                            .shadow(radius: 4)
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 16)
-                }
-            }
             .navigationBarHidden(true)
         }
         .onAppear {

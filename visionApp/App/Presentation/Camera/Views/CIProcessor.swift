@@ -131,7 +131,7 @@ final class CIProcessor {
             let maxTunnelRadius = minSide / 2.0  // La mitad del lado más corto
 
             // Convertir el clampedFocus en un radio que podemos aplicar al túnel
-            let tunnelRadius = minTunnelRadius + (maxTunnelRadius - minTunnelRadius) * clampedFocus // Radio ajustado
+            let tunnelRadius = minTunnelRadius + (maxTunnelRadius - minTunnelRadius) * (1-clampedFocus) // Radio ajustado
             
             // Calcular el feather en relación al radio del túnel (ajustar estos valores)
             let feather = tunnelRadius * (0.12 + 0.08 * (1.0 - clampedFocus)) // Ajusta el factor
