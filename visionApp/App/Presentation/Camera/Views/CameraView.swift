@@ -42,6 +42,8 @@ struct CameraView: View {
                             cameraService: cameraViewModel.cameraService,
                             illness: globalViewModel.selectedIllness,
                             centralFocus: globalViewModel.centralFocus,
+                            filterEnabled: globalViewModel.filterEnabled,
+                            illnessSettings: globalViewModel.currentIllnessSettings,
                             deviceOrientation: orientationObserver.orientation
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
@@ -64,7 +66,9 @@ struct CameraView: View {
                             image: cameraViewModel.cameraService.currentFrame,
                             panel: .full,
                             illness: globalViewModel.selectedIllness,
-                            centralFocus: globalViewModel.centralFocus
+                            centralFocus: globalViewModel.centralFocus,
+                            filterEnabled: globalViewModel.filterEnabled,
+                            illnessSettings: globalViewModel.currentIllnessSettings
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
 
@@ -128,3 +132,4 @@ struct CameraView: View {
         .environmentObject(AppRouter())
         .environmentObject(DeviceOrientationObserver.shared)
 }
+

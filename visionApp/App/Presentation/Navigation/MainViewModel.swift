@@ -9,12 +9,32 @@ import SwiftUI
 import Combine
 import AVFoundation
 
-
 class MainViewModel: ObservableObject {
     @Published var selectedIllness: Illness?
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
+
+    // Ajustes específicos por filtro
+    @Published var cataractsSettings: CataractsSettings = .defaults
+    @Published var glaucomaSettings: GlaucomaSettings = .defaults
+    @Published var macularDegenerationSettings: MacularDegenerationSettings = .defaults
+    @Published var tunnelVisionSettings: TunnelVisionSettings = .defaults
+
+    // Wrapper de ajustes según la enfermedad seleccionada
+    var currentIllnessSettings: IllnessSettings? {
+        guard let type = selectedIllness?.filterType else { return nil }
+        switch type {
+        case .cataracts:
+            return .cataracts(cataractsSettings)
+        case .glaucoma:
+            return .glaucoma(glaucomaSettings)
+        case .macularDegeneration:
+            return .macular(macularDegenerationSettings)
+        case .tunnelVision:
+            return .tunnel(tunnelVisionSettings)
+        }
+    }
 
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
@@ -65,3 +85,4 @@ class MainViewModel: ObservableObject {
         synthesizer.speak(utterance)
     }
 }
+

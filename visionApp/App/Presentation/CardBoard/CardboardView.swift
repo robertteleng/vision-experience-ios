@@ -6,6 +6,8 @@ struct CardboardView: View {
     @ObservedObject var cameraService: CameraService
     let illness: Illness?
     let centralFocus: Double
+    let filterEnabled: Bool
+    let illnessSettings: IllnessSettings?
     @State var deviceOrientation: UIDeviceOrientation
     
     var body: some View {
@@ -17,9 +19,10 @@ struct CardboardView: View {
                         image: cameraService.currentFrame,
                         panel: .left,
                         illness: illness,
-                        centralFocus: centralFocus
+                        centralFocus: centralFocus,
+                        filterEnabled: filterEnabled,
+                        illnessSettings: illnessSettings
                     )
-                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .left)
                     
                     if cameraService.currentFrame == nil {
                         Text("No frame LEFT")
@@ -35,9 +38,10 @@ struct CardboardView: View {
                         image: cameraService.currentFrame,
                         panel: .right,
                         illness: illness,
-                        centralFocus: centralFocus
+                        centralFocus: centralFocus,
+                        filterEnabled: filterEnabled,
+                        illnessSettings: illnessSettings
                     )
-                    ColorOverlay(illness: illness, centralFocus: centralFocus, panel: .right)
                     
                     if cameraService.currentFrame == nil {
                         Text("No frame RIGHT")
@@ -59,7 +63,10 @@ struct CardboardView: View {
     CardboardView(
         cameraService: CameraViewModel().cameraService,
         illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
-        centralFocus: 20,
+        centralFocus: 0.5,
+        filterEnabled: true,
+        illnessSettings: .cataracts(.defaults),
         deviceOrientation: .portrait
     )
 }
+

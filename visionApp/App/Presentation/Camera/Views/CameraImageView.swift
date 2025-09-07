@@ -27,6 +27,10 @@ struct CameraImageView: View {
     let illness: Illness?
     /// The central focus value for processing.
     let centralFocus: Double
+    /// Filter enabled toggle
+    let filterEnabled: Bool
+    /// Illness-specific settings wrapper
+    let illnessSettings: IllnessSettings?
 
     /// Crops the input image according to the selected panel.
     private func croppedImage(_ image: CGImage?, panel: Panel) -> CGImage? {
@@ -52,10 +56,12 @@ struct CameraImageView: View {
                     // Processes the image with Core Image based on the selected illness (CGImage path).
                     let processed: CGImage = CIProcessor.shared.apply(
                         illness: illness,
+                        settings: illnessSettings,
+                        filterEnabled: filterEnabled,
                         centralFocus: centralFocus,
                         to: base,
-                        panelSize: geometry.size,
-//                        centerOffsetNormalized: centerOffsetNormalized(for: panel)
+                        panelSize: geometry.size
+                        // centerOffsetNormalized: centerOffsetNormalized(for: panel)
                     )
                     Image(decorative: processed, scale: 1.0, orientation: .up)
                         .resizable()
@@ -75,7 +81,9 @@ struct CameraImageView: View {
         image: nil,
         panel: .full,
         illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
-        centralFocus: 0.5
+        centralFocus: 0.5,
+        filterEnabled: true,
+        illnessSettings: .cataracts(.defaults)
     )
 }
 
@@ -93,17 +101,3 @@ struct CameraImageView: View {
 //    }
 //}
 
-
-//    /// Optional per-panel center offset to compensate small misalignment in stereoscopic mode. --> ISMA: Esto tampoco es necesario, la imagen se ve centrada sin offset. Lo dejo por si le tienes cariño, lo aplicabas a CIProcessor así: centerOffsetNormalized: centerOffsetNormalized(for: panel). Te dejo ese parámetro en CIProcessor comentado por si en el futuro lo quieres usar.
-//    /// Values are normalized (fraction of image width/height).
-//    private func centerOffsetNormalized(for panel: Panel) -> CGPoint {
-//        switch panel {
-//        case .left:
-//            // Slightly shift center to the left (~3% of width). Tune if needed.
-//            return CGPoint(x: 0.0, y: 0.0)
-//        case .right:
-//            return CGPoint(x: 0.0, y: 0.0)
-//        case .full:
-//            return .zero
-//        }
-//    }
