@@ -10,7 +10,6 @@ struct MainView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Renderiza la pantalla según el estado de navegación
                 switch router.currentRoute {
                 case .splash:
                     SplashView()
@@ -23,7 +22,13 @@ struct MainView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // Si tienes lógica de voz, puedes inicializar aquí
+            // Solicitar permisos una sola vez
+            mainViewModel.speechService.requestAuthorization { _ in
+                // Opcional: iniciar en función del estado actual
+                if self.mainViewModel.isCardboardMode && self.orientationObserver.orientation.isLandscape {
+                    self.mainViewModel.speechService.startRecognition()
+                }
+            }
         }
         .onChange(of: mainViewModel.selectedIllness) {
             if mainViewModel.selectedIllness != nil {
@@ -56,3 +61,4 @@ struct MainView: View {
         .environmentObject(MainViewModel())
         .environmentObject(DeviceOrientationObserver.shared)
 }
+

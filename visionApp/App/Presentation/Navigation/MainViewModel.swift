@@ -9,11 +9,22 @@ import SwiftUI
 import Combine
 import AVFoundation
 
-class MainViewModel: ObservableObject {
+class MainViewModel: NSObject, ObservableObject {
     @Published var selectedIllness: Illness?
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
+
+    // Control global de reconocimiento
+    @Published var isSpeechEnabled: Bool = true {
+        didSet {
+            if isSpeechEnabled {
+                speechService.startRecognition()
+            } else {
+                speechService.stopRecognition()
+            }
+        }
+    }
 
     // Ajustes específicos por filtro
     @Published var cataractsSettings: CataractsSettings = .defaults
@@ -43,7 +54,16 @@ class MainViewModel: ObservableObject {
 
     init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
         self.speechService = speechService
+        super.init()
+        // Idioma por defecto: español, con fallback inglés
+        self.speechService.setPreferredLocales(primary: "es-ES", secondary: "en-US")
         setupSpeechRecognitionBinding()
+        // Arrancar si está habilitado
+        if isSpeechEnabled {
+            self.speechService.requestAuthorization { [weak self] ok in
+                if ok { self?.speechService.startRecognition() }
+            }
+        }
     }
 
     private func setupSpeechRecognitionBinding() {
@@ -52,25 +72,22 @@ class MainViewModel: ObservableObject {
             .sink { [weak self] command in
                 guard let self = self else { return }
                 let lowercased = command.lowercased()
-                // Comando para volver atrás (español e inglés)
-                if lowercased.contains("volver") || lowercased.contains("atrás") || lowercased.contains("back") || lowercased.contains("go back") {
+                guard !lowercased.isEmpty else { return }
+
+                if lowercased.contains("volver") || lowercased.contains("atrás") || lowercased.contains("atras") || lowercased.contains("back") || lowercased.contains("go back") {
                     self.navigateToIllnessList?()
                     self.speak("Volviendo a la selección de enfermedad")
                     return
                 }
-                // Cataracts
                 if lowercased.contains("cataracts") || lowercased.contains("cataratas") {
                     self.selectedIllness = Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts)
                     self.speak("Filtro de cataratas activado")
-                // Glaucoma
                 } else if lowercased.contains("glaucoma") {
                     self.selectedIllness = Illness(name: "Glaucoma", description: "Simula visión con glaucoma.", filterType: .glaucoma)
                     self.speak("Filtro de glaucoma activado")
-                // Macular Degeneration
-                } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") {
+                } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") || lowercased.contains("degeneracion macular") {
                     self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
                     self.speak("Filtro de degeneración macular activado")
-                // Tunnel Vision
                 } else if lowercased.contains("tunnel vision") || lowercased.contains("visión de túnel") || lowercased.contains("vision de tunel") || lowercased.contains("tunel") {
                     self.selectedIllness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
                     self.speak("Filtro de visión en túnel activado")
@@ -79,10 +96,46 @@ class MainViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // Coordina TTS con el reconocimiento para evitar auto-transcripción
     func speak(_ text: String) {
+        // Pausar reconocimiento mientras habla
+        speechService.pauseRecognition()
+
         let utterance = AVSpeechUtterance(string: text)
+        // Ajustar idioma del TTS según preferencias del sistema (o forzar es-ES si quieres)
+        if let lang = Locale.preferredLanguages.first {
+            utterance.voice = AVSpeechSynthesisVoice(language: lang)
+        } else {
+            utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
+        }
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+
         let synthesizer = AVSpeechSynthesizer()
+        synthesizer.delegate = self
         synthesizer.speak(utterance)
+
+        // Mantener el sintetizador vivo con una clave de puntero estable
+        objc_setAssociatedObject(self, &AssociatedKeys.synthKey, synthesizer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 }
 
+private enum AssociatedKeys {
+    // Use a static stored variable as a unique token; its address is a stable key.
+    static var synthKey: UInt8 = 0
+}
+
+extension MainViewModel: AVSpeechSynthesizerDelegate {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        objc_setAssociatedObject(self, &AssociatedKeys.synthKey, nil, .OBJC_ASSOCIATION_ASSIGN)
+        if isSpeechEnabled {
+            speechService.resumeRecognition()
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        objc_setAssociatedObject(self, &AssociatedKeys.synthKey, nil, .OBJC_ASSOCIATION_ASSIGN)
+        if isSpeechEnabled {
+            speechService.resumeRecognition()
+        }
+    }
+}
