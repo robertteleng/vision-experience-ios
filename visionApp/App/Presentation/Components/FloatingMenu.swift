@@ -16,7 +16,7 @@ extension VerticalAlignment {
 }
 
 struct FloatingMenu: View {
-    @EnvironmentObject var globalViewModel: MainViewModel
+    @EnvironmentObject var mainViewModel: MainViewModel
     @EnvironmentObject var router: AppRouter
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -59,10 +59,10 @@ struct FloatingMenu: View {
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                            globalViewModel.isSpeechEnabled.toggle()
+                            mainViewModel.isSpeechEnabled.toggle()
                         }
                     }) {
-                        FloatingMenuIcon(systemName: globalViewModel.isSpeechEnabled ? "mic.fill" : "mic.slash.fill")
+                        FloatingMenuIcon(systemName: mainViewModel.isSpeechEnabled ? "mic.fill" : "mic.slash.fill")
                     }
                     // “list.bullet” ahora abre/cierra el panel de filtros
                     Button(action: {
@@ -73,7 +73,7 @@ struct FloatingMenu: View {
                     }) {
                         FloatingMenuIcon(systemName: "list.bullet")
                     }
-                    Button(action: { globalViewModel.isCardboardMode.toggle() }) {
+                    Button(action: { mainViewModel.isCardboardMode.toggle() }) {
                         FloatingMenuIcon(systemName: "eyeglasses")
                     }
                 }
@@ -102,13 +102,16 @@ struct FloatingMenu: View {
             // --- Panel de filtros dinámico por filtro seleccionado
             if expanded && showFiltersPanel {
                 CompactFiltersPanel(
-                    filterEnabled: $globalViewModel.filterEnabled,
-                    centralFocus: $globalViewModel.centralFocus,
-                    selectedFilterType: globalViewModel.selectedIllness?.filterType,
-                    cataracts: $globalViewModel.cataractsSettings,
-                    glaucoma: $globalViewModel.glaucomaSettings,
-                    macular: $globalViewModel.macularDegenerationSettings,
-                    tunnel: $globalViewModel.tunnelVisionSettings,
+                    filterEnabled: $mainViewModel.filterEnabled,
+                    centralFocus: $mainViewModel.centralFocus,
+                    selectedFilterType: mainViewModel.selectedIllness?.filterType,
+                    cataracts: $mainViewModel.cataractsSettings,
+                    glaucoma: $mainViewModel.glaucomaSettings,
+                    macular: $mainViewModel.macularDegenerationSettings,
+                    tunnel: $mainViewModel.tunnelVisionSettings,
+                    blurry: $mainViewModel.blurryVisionSettings,
+                    scotoma: $mainViewModel.centralScotomaSettings,
+                    hemianopsia: $mainViewModel.hemianopsiaSettings,
                     width: sliderWidth,
                     sliderHeight: sliderHeight
                 )
@@ -117,7 +120,7 @@ struct FloatingMenu: View {
                 .transition(.move(edge: .leading).combined(with: .opacity))
             } else if expanded && !showFiltersPanel {
                 // Slider rápido de intensidad global
-                GlassSlider(value: $globalViewModel.centralFocus, width: sliderWidth)
+                GlassSlider(value: $mainViewModel.centralFocus, width: sliderWidth)
                     .frame(height: sliderHeight)
                     .alignmentGuide(.xCenter) { d in d[VerticalAlignment.center] }
                     .padding(.leading, Self.menuWidth + 14)
@@ -127,3 +130,10 @@ struct FloatingMenu: View {
     }
 }
 
+#Preview {
+    FloatingMenu(expanded: .constant(true))
+        .padding()
+        .background(Color.gray.opacity(0.2))
+        .environmentObject(MainViewModel())
+        .environmentObject(AppRouter())
+}

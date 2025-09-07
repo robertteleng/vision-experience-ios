@@ -1,5 +1,5 @@
 //
-//  GlobalViewModel.swift
+//  mainViewModel.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
@@ -32,6 +32,11 @@ class MainViewModel: NSObject, ObservableObject {
     @Published var macularDegenerationSettings: MacularDegenerationSettings = .defaults
     @Published var tunnelVisionSettings: TunnelVisionSettings = .defaults
 
+    // Nuevos ajustes
+    @Published var blurryVisionSettings: BlurryVisionSettings = .defaults
+    @Published var centralScotomaSettings: CentralScotomaSettings = .defaults
+    @Published var hemianopsiaSettings: HemianopsiaSettings = .defaults
+
     // Wrapper de ajustes según la enfermedad seleccionada
     var currentIllnessSettings: IllnessSettings? {
         guard let type = selectedIllness?.filterType else { return nil }
@@ -44,6 +49,12 @@ class MainViewModel: NSObject, ObservableObject {
             return .macular(macularDegenerationSettings)
         case .tunnelVision:
             return .tunnel(tunnelVisionSettings)
+        case .blurryVision:
+            return .blurryVision(blurryVisionSettings)
+        case .centralScotoma:
+            return .centralScotoma(centralScotomaSettings)
+        case .hemianopsia:
+            return .hemianopsia(hemianopsiaSettings)
         }
     }
 
@@ -91,6 +102,15 @@ class MainViewModel: NSObject, ObservableObject {
                 } else if lowercased.contains("tunnel vision") || lowercased.contains("visión de túnel") || lowercased.contains("vision de tunel") || lowercased.contains("tunel") {
                     self.selectedIllness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
                     self.speak("Filtro de visión en túnel activado")
+                } else if lowercased.contains("visión borrosa") || lowercased.contains("vision borrosa") || lowercased.contains("blurry") {
+                    self.selectedIllness = Illness(name: "Blurry Vision", description: "Simula visión borrosa simple.", filterType: .blurryVision)
+                    self.speak("Filtro de visión borrosa activado")
+                } else if lowercased.contains("escotoma") {
+                    self.selectedIllness = Illness(name: "Central Scotoma", description: "Simula escotoma central.", filterType: .centralScotoma)
+                    self.speak("Filtro de escotoma central activado")
+                } else if lowercased.contains("hemianopsia") || lowercased.contains("hemianopia") {
+                    self.selectedIllness = Illness(name: "Hemianopsia", description: "Simula hemianopsia.", filterType: .hemianopsia)
+                    self.speak("Filtro de hemianopsia activado")
                 }
             }
             .store(in: &cancellables)
@@ -120,7 +140,6 @@ class MainViewModel: NSObject, ObservableObject {
 }
 
 private enum AssociatedKeys {
-    // Use a static stored variable as a unique token; its address is a stable key.
     static var synthKey: UInt8 = 0
 }
 

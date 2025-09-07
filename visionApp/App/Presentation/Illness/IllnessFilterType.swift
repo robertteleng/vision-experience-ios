@@ -6,9 +6,13 @@
 //
 
 enum IllnessFilterType: String, Codable, CaseIterable, Identifiable {
-    case cataracts
-    case glaucoma
-    case macularDegeneration
-    case tunnelVision // Added tunnel vision filter type
+    case cataracts                 // Puede representar “visión borrosa” si ajustas sus parámetros
+    case glaucoma                  // Reducción periférica (visión en túnel)
+    case macularDegeneration       // Alteraciones centrales/degenerativas
+    case tunnelVision              // Reducción periférica de campo visual
+    case centralScotoma            // Escotoma central
+    case hemianopsia               // Hemianopsia (izquierda/derecha/superior/inferior)
+    case blurryVision              // Visión borrosa pura (opcional, separada de cataracts)
+    
     var id: String { rawValue }
 }

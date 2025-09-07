@@ -17,7 +17,7 @@ import SwiftUI
 /// - Provides interactive controls for navigation.
 struct CameraView: View {
     /// Provides access to the main application state and selected illness.
-    @EnvironmentObject var globalViewModel: MainViewModel
+    @EnvironmentObject var mainViewModel: MainViewModel
     /// Manages camera session and frame updates.
     @StateObject private var cameraViewModel = CameraViewModel()
     /// Controls whether the floating menu is expanded.
@@ -40,10 +40,10 @@ struct CameraView: View {
                         // Capa de imagen con efecto estereoscópico
                         CardboardView(
                             cameraService: cameraViewModel.cameraService,
-                            illness: globalViewModel.selectedIllness,
-                            centralFocus: globalViewModel.centralFocus,
-                            filterEnabled: globalViewModel.filterEnabled,
-                            illnessSettings: globalViewModel.currentIllnessSettings,
+                            illness: mainViewModel.selectedIllness,
+                            centralFocus: mainViewModel.centralFocus,
+                            filterEnabled: mainViewModel.filterEnabled,
+                            illnessSettings: mainViewModel.currentIllnessSettings,
                             deviceOrientation: orientationObserver.orientation
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
@@ -65,10 +65,10 @@ struct CameraView: View {
                         CameraImageView(
                             image: cameraViewModel.cameraService.currentFrame,
                             panel: .full,
-                            illness: globalViewModel.selectedIllness,
-                            centralFocus: globalViewModel.centralFocus,
-                            filterEnabled: globalViewModel.filterEnabled,
-                            illnessSettings: globalViewModel.currentIllnessSettings
+                            illness: mainViewModel.selectedIllness,
+                            centralFocus: mainViewModel.centralFocus,
+                            filterEnabled: mainViewModel.filterEnabled,
+                            illnessSettings: mainViewModel.currentIllnessSettings
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
 

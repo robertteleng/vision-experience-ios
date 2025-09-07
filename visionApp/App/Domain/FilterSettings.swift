@@ -110,6 +110,69 @@ public struct TunnelVisionSettings: Equatable, Codable {
     public static var `defaults`: TunnelVisionSettings { TunnelVisionSettings() }
 }
 
+// NUEVO: Visión borrosa simple
+public struct BlurryVisionSettings: Equatable, Codable {
+    public var blurRadius: Double
+
+    public init(blurRadius: Double = 8.0) {
+        self.blurRadius = blurRadius
+    }
+
+    public static var `defaults`: BlurryVisionSettings { BlurryVisionSettings() }
+}
+
+// NUEVO: Escotoma central
+public struct CentralScotomaSettings: Equatable, Codable {
+    // Radio interno (opaco) del escotoma en px
+    public var innerRadius: Double
+    // Feather (transición suave) en px
+    public var feather: Double
+    // Opacidad del oscurecimiento en el escotoma (0..1)
+    public var opacity: Double
+    // Offset normalizado del centro del escotoma relativo a la imagen
+    public var offsetNormalizedX: Double
+    public var offsetNormalizedY: Double
+
+    public init(
+        innerRadius: Double = 60.0,
+        feather: Double = 80.0,
+        opacity: Double = 1.0,
+        offsetNormalizedX: Double = 0.0,
+        offsetNormalizedY: Double = 0.0
+    ) {
+        self.innerRadius = innerRadius
+        self.feather = feather
+        self.opacity = opacity
+        self.offsetNormalizedX = offsetNormalizedX
+        self.offsetNormalizedY = offsetNormalizedY
+    }
+
+    public static var `defaults`: CentralScotomaSettings { CentralScotomaSettings() }
+}
+
+// NUEVO: Hemianopsia
+public enum HemianopsiaSide: String, Codable, CaseIterable {
+    case left, right, top, bottom
+}
+
+public struct HemianopsiaSettings: Equatable, Codable {
+    public var side: HemianopsiaSide
+    public var feather: Double
+    public var opacity: Double
+
+    public init(
+        side: HemianopsiaSide = .left,
+        feather: Double = 40.0,
+        opacity: Double = 1.0
+    ) {
+        self.side = side
+        self.feather = feather
+        self.opacity = opacity
+    }
+
+    public static var `defaults`: HemianopsiaSettings { HemianopsiaSettings() }
+}
+
 // MARK: - Wrapper de ajustes por tipo de enfermedad
 
 public enum IllnessSettings: Equatable, Codable {
@@ -117,5 +180,9 @@ public enum IllnessSettings: Equatable, Codable {
     case glaucoma(GlaucomaSettings)
     case macular(MacularDegenerationSettings)
     case tunnel(TunnelVisionSettings)
-}
 
+    // Nuevos casos
+    case blurryVision(BlurryVisionSettings)
+    case centralScotoma(CentralScotomaSettings)
+    case hemianopsia(HemianopsiaSettings)
+}

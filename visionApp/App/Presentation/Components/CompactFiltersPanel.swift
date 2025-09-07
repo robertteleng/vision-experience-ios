@@ -19,12 +19,16 @@ struct CompactFiltersPanel: View {
     @Binding var macular: MacularDegenerationSettings
     @Binding var tunnel: TunnelVisionSettings
 
+    // Nuevos ajustes
+    @Binding var blurry: BlurryVisionSettings
+    @Binding var scotoma: CentralScotomaSettings
+    @Binding var hemianopsia: HemianopsiaSettings
+
     var width: CGFloat
     var sliderHeight: CGFloat
 
     var body: some View {
         GeometryReader { geo in
-            // Altura máxima ~48% del alto disponible
             let maxPanelHeight = max(220.0, geo.size.height * 0.48)
 
             VStack(spacing: 0) {
@@ -56,6 +60,12 @@ struct CompactFiltersPanel: View {
                             macularSection
                         case .tunnelVision:
                             tunnelSection
+                        case .blurryVision:
+                            blurryVisionSection
+                        case .centralScotoma:
+                            centralScotomaSection
+                        case .hemianopsia:
+                            hemianopsiaSection
                         case .none:
                             Text("Selecciona una enfermedad para ajustar sus parámetros.")
                                 .font(.footnote)
@@ -137,6 +147,63 @@ struct CompactFiltersPanel: View {
         .padding(.top, 6)
     }
 
+    // NUEVAS SECCIONES
+
+    private var blurryVisionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Visión borrosa").font(.subheadline).bold()
+            sliderRow(title: "Desenfoque", value: $blurry.blurRadius, range: 0...30, format: "%.0f px")
+        }
+        .padding(.top, 6)
+    }
+
+    private var centralScotomaSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Escotoma central").font(.subheadline).bold()
+            sliderRow(title: "Radio interno", value: $scotoma.innerRadius, range: 0...200, format: "%.0f px")
+            sliderRow(title: "Feather (borde)", value: $scotoma.feather, range: 0...200, format: "%.0f px")
+            sliderRow(title: "Opacidad", value: $scotoma.opacity, range: 0...1, format: "%.2f")
+            // Offsets normalizados (-0.5..0.5 suele ser útil; dejamos -1..1 por flexibilidad)
+            sliderRow(title: "Offset X", value: $scotoma.offsetNormalizedX, range: -1...1, format: "%.2f")
+            sliderRow(title: "Offset Y", value: $scotoma.offsetNormalizedY, range: -1...1, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var hemianopsiaSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Hemianopsia").font(.subheadline).bold()
+            // Selector de lado
+            HStack {
+                Text("Lado")
+                    .font(.subheadline)
+                Spacer()
+                Picker("", selection: Binding(
+                    get: { hemianopsia.side },
+                    set: { hemianopsia.side = $0 }
+                )) {
+                    ForEach(HemianopsiaSide.allCases, id: \.self) { side in
+                        Text(label(for: side)).tag(side)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: .infinity)
+            }
+            sliderRow(title: "Feather (borde)", value: $hemianopsia.feather, range: 0...200, format: "%.0f px")
+            sliderRow(title: "Opacidad", value: $hemianopsia.opacity, range: 0...1, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private func label(for side: HemianopsiaSide) -> String {
+        switch side {
+        case .left: return "Izq."
+        case .right: return "Der."
+        case .top: return "Sup."
+        case .bottom: return "Inf."
+        }
+    }
+
     // Helper UI
     private func sliderRow(title: String, value: Binding<Double>, range: ClosedRange<Double>, format: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -156,9 +223,30 @@ struct CompactFiltersPanel: View {
 }
 
 #Preview {
-    FloatingMenu(expanded: .constant(true))
-        .padding()
-        .background(Color.gray.opacity(0.2))
-        .environmentObject(MainViewModel())
-        .environmentObject(AppRouter())
+    // Nota: Para el preview necesitamos bindings “dummy”.
+    @State var filterEnabled = true
+    @State var centralFocus = 0.5
+    @State var cataracts = CataractsSettings.defaults
+    @State var glaucoma = GlaucomaSettings.defaults
+    @State var macular = MacularDegenerationSettings.defaults
+    @State var tunnel = TunnelVisionSettings.defaults
+    @State var blurry = BlurryVisionSettings.defaults
+    @State var scotoma = CentralScotomaSettings.defaults
+    @State var hemianopsia = HemianopsiaSettings.defaults
+
+    return CompactFiltersPanel(
+        filterEnabled: $filterEnabled,
+        centralFocus: $centralFocus,
+        selectedFilterType: .centralScotoma,
+        cataracts: $cataracts,
+        glaucoma: $glaucoma,
+        macular: $macular,
+        tunnel: $tunnel,
+        blurry: $blurry,
+        scotoma: $scotoma,
+        hemianopsia: $hemianopsia,
+        width: 320,
+        sliderHeight: 30
+    )
+    .padding()
 }

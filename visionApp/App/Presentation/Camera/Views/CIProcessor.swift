@@ -21,21 +21,20 @@ final class CIProcessor {
     
     /// Aplica efecto a un CGImage y devuelve CGImage (sin UIKit).
     func apply(
-        illness: Illness?, // Enfermedad a la cual se aplicará el efecto
-        settings: IllnessSettings?, // Ajustes específicos por enfermedad
-        filterEnabled: Bool, // Si está desactivado, devuelve imagen original
-        centralFocus: Double, // Intensidad global
-        to image: CGImage, // Imagen de entrada
-        panelSize: CGSize, // Tamaño del panel para la imagen
-        centerOffsetNormalized: CGPoint = .zero // Desplazamiento normalizado para centrar el efecto
+        illness: Illness?,
+        settings: IllnessSettings?,
+        filterEnabled: Bool,
+        centralFocus: Double,
+        to image: CGImage,
+        panelSize: CGSize,
+        centerOffsetNormalized: CGPoint = .zero
     ) -> CGImage {
-        // Si no hay enfermedad o el filtro está desactivado, devolvemos la imagen original
         guard filterEnabled, let illness = illness else { return image }
 
         let inputCI = CIImage(cgImage: image)
         let clampedFocus = max(0.0, min(1.0, centralFocus))
 
-        // Centro del efecto con offset
+        // Centro del efecto con offset externo
         let baseCenter = CGPoint(x: inputCI.extent.midX, y: inputCI.extent.midY)
         let offsetPx = CGPoint(
             x: centerOffsetNormalized.x * inputCI.extent.width,
@@ -46,12 +45,10 @@ final class CIProcessor {
         let outputCI: CIImage
         switch illness.filterType {
         case .cataracts:
-            // Settings concretos (con defaults por si no llegan)
             let s: CataractsSettings = {
                 if case .cataracts(let v) = settings { return v }
                 return .defaults
             }()
-            // Aplicamos parámetros modulados por centralFocus como factor global
             let blur = CIFilter.gaussianBlur()
             blur.inputImage = inputCI
             let blurRadius = s.blurRadius * clampedFocus
@@ -69,7 +66,6 @@ final class CIProcessor {
             colorMatrix.gVector = CIVector(x: 0, y: 1.0, z: 0, w: 0)
             let blueScale = max(0.0, 1.0 - CGFloat(s.blueReduction * clampedFocus))
             colorMatrix.bVector = CIVector(x: 0, y: 0, z: blueScale, w: 0)
-
             outputCI = colorMatrix.outputImage ?? blurred
 
         case .glaucoma:
@@ -126,7 +122,6 @@ final class CIProcessor {
             blend.inputImage = blurredImage
             blend.backgroundImage = darkOverlay
             blend.maskImage = distortion.outputImage
-
             outputCI = blend.outputImage ?? inputCI
 
         case .tunnelVision:
@@ -165,6 +160,105 @@ final class CIProcessor {
             composite.backgroundImage = darkenedPeripheral
             composite.maskImage = mask
             outputCI = composite.outputImage ?? inputCI
+
+        case .blurryVision:
+            let s: BlurryVisionSettings = {
+                if case .blurryVision(let v) = settings { return v }
+                return .defaults
+            }()
+            let blur = CIFilter.gaussianBlur()
+            blur.inputImage = inputCI
+            blur.radius = Float(s.blurRadius * clampedFocus)
+            outputCI = blur.outputImage?.clampedToExtent().cropped(to: inputCI.extent) ?? inputCI
+
+        case .centralScotoma:
+            let s: CentralScotomaSettings = {
+                if case .centralScotoma(let v) = settings { return v }
+                return .defaults
+            }()
+            let centerWithOffsets = CGPoint(
+                x: effectCenter.x + CGFloat(s.offsetNormalizedX) * inputCI.extent.width,
+                y: effectCenter.y + CGFloat(s.offsetNormalizedY) * inputCI.extent.height
+            )
+            let inner = max(0.0, CGFloat(s.innerRadius) * CGFloat(0.6 + 0.4 * clampedFocus))
+            let feather = max(1.0, CGFloat(s.feather) * CGFloat(0.5 + 0.5 * clampedFocus))
+            let outer = inner + feather
+
+            let radial = CIFilter.radialGradient()
+            radial.center = centerWithOffsets
+            radial.radius0 = Float(inner)
+            radial.radius1 = Float(outer)
+            radial.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: 0) // centro
+            radial.color1 = CIColor(red: 1, green: 1, blue: 1, alpha: 1) // fuera
+            let mask = radial.outputImage?.cropped(to: inputCI.extent) ?? inputCI
+
+            let alpha = CGFloat(min(1.0, max(0.0, s.opacity)) * clampedFocus)
+            let dark = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: alpha)).cropped(to: inputCI.extent)
+
+            let blend = CIFilter.blendWithMask()
+            blend.inputImage = inputCI
+            blend.backgroundImage = dark
+            blend.maskImage = mask
+            outputCI = blend.outputImage ?? inputCI
+
+        case .hemianopsia:
+            let s: HemianopsiaSettings = {
+                if case .hemianopsia(let v) = settings { return v }
+                return .defaults
+            }()
+            let rect = inputCI.extent
+            let dark = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(s.opacity * clampedFocus)))
+                .cropped(to: rect)
+
+            let feather = CGFloat(max(1.0, s.feather))
+            let gradient = CIFilter.linearGradient()
+            let startPoint: CGPoint
+            let endPoint: CGPoint
+            switch s.side {
+            case .left:
+                startPoint = CGPoint(x: rect.minX + feather, y: rect.midY)
+                endPoint   = CGPoint(x: rect.minX, y: rect.midY)
+            case .right:
+                startPoint = CGPoint(x: rect.maxX - feather, y: rect.midY)
+                endPoint   = CGPoint(x: rect.maxX, y: rect.midY)
+            case .top:
+                startPoint = CGPoint(x: rect.midX, y: rect.maxY - feather)
+                endPoint   = CGPoint(x: rect.midX, y: rect.maxY)
+            case .bottom:
+                startPoint = CGPoint(x: rect.midX, y: rect.minY + feather)
+                endPoint   = CGPoint(x: rect.midX, y: rect.minY)
+            }
+            gradient.point0 = startPoint
+            gradient.point1 = endPoint
+            gradient.color0 = CIColor.white
+            gradient.color1 = CIColor.black
+            let g = gradient.outputImage?.cropped(to: rect) ?? CIImage(color: .white).cropped(to: rect)
+
+            let mask: CIImage
+            switch s.side {
+            case .left:
+                let rightWhite = CIImage(color: .white).cropped(to: CGRect(x: rect.midX, y: rect.minY, width: rect.width / 2, height: rect.height))
+                let leftGrad = g.cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width / 2, height: rect.height))
+                mask = rightWhite.composited(over: leftGrad.composited(over: CIImage(color: .black).cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width / 2, height: rect.height)))).cropped(to: rect)
+            case .right:
+                let leftWhite = CIImage(color: .white).cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width / 2, height: rect.height))
+                let rightGrad = g.cropped(to: CGRect(x: rect.midX, y: rect.minY, width: rect.width / 2, height: rect.height))
+                mask = leftWhite.composited(over: rightGrad.composited(over: CIImage(color: .black).cropped(to: CGRect(x: rect.midX, y: rect.minY, width: rect.width / 2, height: rect.height)))).cropped(to: rect)
+            case .top:
+                let bottomWhite = CIImage(color: .white).cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height / 2))
+                let topGrad = g.cropped(to: CGRect(x: rect.minX, y: rect.midY, width: rect.width, height: rect.height / 2))
+                mask = bottomWhite.composited(over: topGrad.composited(over: CIImage(color: .black).cropped(to: CGRect(x: rect.minX, y: rect.midY, width: rect.width, height: rect.height / 2)))).cropped(to: rect)
+            case .bottom:
+                let topWhite = CIImage(color: .white).cropped(to: CGRect(x: rect.minX, y: rect.midY, width: rect.width, height: rect.height / 2))
+                let bottomGrad = g.cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height / 2))
+                mask = topWhite.composited(over: bottomGrad.composited(over: CIImage(color: .black).cropped(to: CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height / 2)))).cropped(to: rect)
+            }
+
+            let blend = CIFilter.blendWithMask()
+            blend.inputImage = inputCI
+            blend.backgroundImage = dark
+            blend.maskImage = mask
+            outputCI = blend.outputImage ?? inputCI
         }
 
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image
