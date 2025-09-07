@@ -1,26 +1,36 @@
 import SwiftUI
 
 struct IllnessListView: View {
-    @EnvironmentObject var globalViewModel: MainViewModel
+    @EnvironmentObject var mainViewModel: MainViewModel
     @EnvironmentObject var router: AppRouter
 
     // Lista de enfermedades usando el modelo Illness
     let illnesses: [Illness] = [
         Illness(name: "Cataracts", description: "Simulates cataracts vision.", filterType: .cataracts),
         Illness(name: "Glaucoma", description: "Simulates glaucoma vision.", filterType: .glaucoma),
+<<<<<<< HEAD
         Illness(name: "Macular Degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration),
         Illness(name: "Diabetic Retinopathy", description: "Simulates diabetic retinopathy artifacts.", filterType: .diabeticRetinopathy),
         Illness(name: "Color Blindness (Deuteranopia)", description: "Simulates green cone (M) deficiency.", filterType: .deuteranopia),
         Illness(name: "Astigmatism", description: "Simulates directional blur and ghosting.", filterType: .astigmatism)
+=======
+        Illness(name: "Macular degeneration", description: "Simulates macular degeneration vision.", filterType: .macularDegeneration),
+        Illness(name: "Tunnel Vision", description: "Simulates strong tunnel vision.", filterType: .tunnelVision),
+
+        // Nuevas problemáticas
+        Illness(name: "Blurry Vision", description: "Simulates global blurry vision.", filterType: .blurryVision),
+        Illness(name: "Central Scotoma", description: "Simulates a central scotoma (central blind spot).", filterType: .centralScotoma),
+        Illness(name: "Hemianopsia", description: "Simulates hemianopsia (half visual field loss).", filterType: .hemianopsia)
+>>>>>>> illness-filters-temp
     ]
 
     var body: some View {
         VStack {
             Spacer()
-            VStack(spacing: 28) {
+            VStack(alignment: .leading, spacing: 28) {
                 ForEach(illnesses) { illness in
                     FloatingGlassButton(title: illness.name, iconName: "eye") {
-                        globalViewModel.selectedIllness = illness
+                        mainViewModel.selectedIllness = illness
                         router.currentRoute = .camera
                     }
                 }
@@ -29,4 +39,10 @@ struct IllnessListView: View {
             Spacer()
         }
     }
+}
+
+#Preview {
+    IllnessListView()
+        .environmentObject(MainViewModel())
+        .environmentObject(AppRouter())
 }

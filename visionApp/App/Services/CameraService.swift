@@ -9,31 +9,8 @@
 //
 
 import Foundation
+import SwiftUI
 import AVFoundation
-import UIKit
-
-
-// Camera permission status
-enum CameraError: Error, LocalizedError {
-    case authorizationDenied
-    case configurationFailed
-    case deviceUnavailable
-    case unknown
-
-    var errorDescription: String? {
-        switch self {
-        case .authorizationDenied:
-            return "Camera access was denied. Please enable it in settings."
-        case .configurationFailed:
-            return "Failed to configure the camera."
-        case .deviceUnavailable:
-            return "No camera device is available."
-        case .unknown:
-            return "Unknown camera error."
-        }
-    }
-}
-
 
 class CameraService: NSObject, ObservableObject {
     // The camera session managed by this service
@@ -45,7 +22,7 @@ class CameraService: NSObject, ObservableObject {
 
     // Publish errors to the UI
     @Published var error: CameraError?
-    @Published var currentFrame: UIImage?
+    @Published var currentFrame: CGImage? // Changed from UIImage? to CGImage?
 
     private var videoOutput: AVCaptureVideoDataOutput?
 
@@ -192,10 +169,15 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+<<<<<<< HEAD
         if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
             let image = UIImage(cgImage: cgImage)
+=======
+        let context = CIContext()
+        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+>>>>>>> illness-filters-temp
             DispatchQueue.main.async {
-                self.currentFrame = image
+                self.currentFrame = cgImage // Publish CGImage directly
             }
         }
     }

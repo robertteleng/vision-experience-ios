@@ -5,19 +5,34 @@
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
 //  This file defines the CameraView, the main camera interface for the app. It manages
+<<<<<<< HEAD
 //  the display of camera frames, overlays, floating menus, and per-illness tuning panels.
 //  The view adapts to device orientation and Cardboard mode, and provides interactive
 //  controls for filter tuning and navigation.
+=======
+//  the display of camera frames, overlays, and the floating menu.
+//  The view adapts to device orientation and Cardboard mode, and provides interactive
+//  controls for navigation.
+>>>>>>> illness-filters-temp
 
 import SwiftUI
 
 /// CameraView is the main camera interface for the app.
+<<<<<<< HEAD
 /// - Displays camera frames and overlays for filter tuning and illness simulation.
 /// - Adapts to device orientation and Cardboard mode.
 /// - Provides interactive controls for filter tuning and navigation.
 struct CameraView: View {
     /// Provides access to the main application state and selected illness.
     @EnvironmentObject var globalViewModel: MainViewModel
+=======
+/// - Displays camera frames and overlays for illness simulation.
+/// - Adapts to device orientation and Cardboard mode.
+/// - Provides interactive controls for navigation.
+struct CameraView: View {
+    /// Provides access to the main application state and selected illness.
+    @EnvironmentObject var mainViewModel: MainViewModel
+>>>>>>> illness-filters-temp
     /// Manages camera session and frame updates.
     @StateObject private var cameraViewModel = CameraViewModel()
     /// Controls whether the floating menu is expanded.
@@ -42,12 +57,16 @@ struct CameraView: View {
                 // Cardboard mode: render stereoscopic left/right panels.
                 if isCardboardMode {
                     ZStack {
+                        // Capa de imagen con efecto estereoscópico
                         CardboardView(
                             cameraService: cameraViewModel.cameraService,
-                            illness: globalViewModel.selectedIllness,
-                            centralFocus: globalViewModel.centralFocus,
+                            illness: mainViewModel.selectedIllness,
+                            centralFocus: mainViewModel.centralFocus,
+                            filterEnabled: mainViewModel.filterEnabled,
+                            illnessSettings: mainViewModel.currentIllnessSettings,
                             deviceOrientation: orientationObserver.orientation
                         )
+<<<<<<< HEAD
                         // Floating menu overlay for filter tuning and settings.
                         VStack {
                             Spacer()
@@ -75,11 +94,24 @@ struct CameraView: View {
                                 .padding(.bottom, 12)
                                 .zIndex(3)
                         }
+=======
+                        .ignoresSafeArea() // solo la imagen ignora safe area
+
+                        // Floating menu overlay (respeta safe area)
+                        VStack {
+                            Spacer()
+                            FloatingMenu(expanded: $menuExpanded)
+                                .padding(.leading, 16)
+                                .padding(.bottom, 16)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .zIndex(2)
+>>>>>>> illness-filters-temp
                     }
-                    .ignoresSafeArea()
                 } else {
                     // Standard camera view (single panel).
                     ZStack {
+<<<<<<< HEAD
                         CameraImageView(
                             image: cameraViewModel.cameraService.currentFrame,
                             panel: .full,
@@ -113,8 +145,29 @@ struct CameraView: View {
                                 .padding(.bottom, 12)
                                 .zIndex(3)
                         }
+=======
+                        // Capa de imagen con filtros (rotación corregida en CameraImageView)
+                        CameraImageView(
+                            image: cameraViewModel.cameraService.currentFrame,
+                            panel: .full,
+                            illness: mainViewModel.selectedIllness,
+                            centralFocus: mainViewModel.centralFocus,
+                            filterEnabled: mainViewModel.filterEnabled,
+                            illnessSettings: mainViewModel.currentIllnessSettings
+                        )
+                        .ignoresSafeArea() // solo la imagen ignora safe area
+
+                        // Floating menu overlay (respeta safe area)
+                        VStack {
+                            Spacer()
+                            FloatingMenu(expanded: $menuExpanded)
+                                .padding(.leading, 16)
+                                .padding(.bottom, 16)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .zIndex(2)
+>>>>>>> illness-filters-temp
                     }
-                    .ignoresSafeArea()
                 }
             } else {
                 // Portrait mode: prompt user to rotate device for camera experience.
@@ -132,7 +185,9 @@ struct CameraView: View {
                         .padding(.bottom, 20)
                         .multilineTextAlignment(.center)
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        // Removed UIKit feedback, use SwiftUI haptics
+                        let generator = UISelectionFeedbackGenerator()
+                        generator.selectionChanged()
                         router.currentRoute = .illnessList
                     }) {
                         Image(systemName: "chevron.left.circle")
@@ -148,6 +203,7 @@ struct CameraView: View {
                 .background(Color.black.ignoresSafeArea())
             }
         }
+<<<<<<< HEAD
         // Hide tuning panel when menu is collapsed.
         .onChange(of: menuExpanded) { oldValue, newValue in
             if !newValue { showSettingsPanel = false }
@@ -357,3 +413,21 @@ private struct MacularTuningPanel: View {
         }
     }
 }
+=======
+        // Start camera session when view appears.
+        .onAppear {
+            cameraViewModel.startSession()
+        }
+        // Stop camera session when view disappears.
+        .onDisappear { cameraViewModel.stopSession() }
+    }
+}
+
+#Preview {
+    CameraView(isCardboardMode: .constant(false))
+        .environmentObject(MainViewModel())
+        .environmentObject(AppRouter())
+        .environmentObject(DeviceOrientationObserver.shared)
+}
+
+>>>>>>> illness-filters-temp

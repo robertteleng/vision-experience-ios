@@ -10,11 +10,13 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 /// CameraViewModel is an observable object that manages camera session state and data.
 /// - Publishes the current camera frame and error state for UI updates.
 /// - Provides methods to start and stop the camera session.
 class CameraViewModel: ObservableObject {
+<<<<<<< HEAD
     /// The latest frame captured by the camera.
     @Published var currentFrame: UIImage?
     /// The latest error encountered by the camera service.
@@ -23,13 +25,25 @@ class CameraViewModel: ObservableObject {
     let cameraService = CameraService() // Internal for testing and access
 
     /// Initializes the view model and sets up bindings to the camera service's publishers.
+=======
+    @Published var currentFrame: CGImage?
+    @Published var error: CameraError?
+    
+    let cameraService = CameraService() // Cambiado de private a internal
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+>>>>>>> illness-filters-temp
     init() {
         cameraService.$currentFrame
             .receive(on: DispatchQueue.main)
-            .assign(to: &$currentFrame)
+            .assign(to: \.currentFrame, on: self)
+            .store(in: &cancellables)
+        
         cameraService.$error
             .receive(on: DispatchQueue.main)
-            .assign(to: &$error)
+            .assign(to: \.error, on: self)
+            .store(in: &cancellables)
     }
 
     /// Starts the camera session.

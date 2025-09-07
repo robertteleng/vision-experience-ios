@@ -24,7 +24,10 @@ struct MainView: View {
     var body: some View {
         NavigationView {
             ZStack {
+<<<<<<< HEAD:visionApp/App/Presentation/Main/MainView.swift
                 // Renders the screen based on the current navigation route.
+=======
+>>>>>>> illness-filters-temp:visionApp/App/Presentation/MainView.swift
                 switch router.currentRoute {
                 case .splash:
                     SplashView() // Splash screen
@@ -38,6 +41,7 @@ struct MainView: View {
                     InmersiveView() // Placeholder for immersive experience
                 }
             }
+<<<<<<< HEAD:visionApp/App/Presentation/Main/MainView.swift
             // Overlay for Cardboard mode button, only on illness list screen.
             .overlay(alignment: .bottomTrailing) {
                 if router.currentRoute == .illnessList {
@@ -63,6 +67,18 @@ struct MainView: View {
         }
         .onAppear {
             // Place for initializing voice logic if needed.
+=======
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            // Solicitar permisos una sola vez
+            mainViewModel.speechService.requestAuthorization { _ in
+                // Opcional: iniciar en función del estado actual
+                if self.mainViewModel.isCardboardMode && self.orientationObserver.orientation.isLandscape {
+                    self.mainViewModel.speechService.startRecognition()
+                }
+            }
+>>>>>>> illness-filters-temp:visionApp/App/Presentation/MainView.swift
         }
         // Handles navigation to camera when an illness is selected.
         .onChange(of: mainViewModel.selectedIllness) {
@@ -91,3 +107,11 @@ struct MainView: View {
         }
     }
 }
+
+#Preview {
+    MainView()
+        .environmentObject(AppRouter())
+        .environmentObject(MainViewModel())
+        .environmentObject(DeviceOrientationObserver.shared)
+}
+

@@ -26,19 +26,22 @@ struct FloatingGlassButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
+                // Icon
                 Image(systemName: iconName)
                     .font(.system(size: 24, weight: .medium))
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
+                // Title
                 Text(title)
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
+                Spacer() // To align text and icon to the left
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 24)
-            .frame(maxWidth: 320)
+            .frame(minWidth: 320)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.10))
@@ -51,4 +54,12 @@ struct FloatingGlassButton: View {
         }
         .accessibilityLabel(title)
     }
+}
+
+#Preview {
+    FloatingGlassButton(title: "Test Button", iconName: "star.fill") {
+        print("Button tapped")
+    }
+    .padding()
+    .background(Color.gray.opacity(0.2))
 }
