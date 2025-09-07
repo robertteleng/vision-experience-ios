@@ -1,5 +1,5 @@
 //
-//  mainViewModel.swift
+//  MainViewModel.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
@@ -32,10 +32,14 @@ class MainViewModel: NSObject, ObservableObject {
     @Published var macularDegenerationSettings: MacularDegenerationSettings = .defaults
     @Published var tunnelVisionSettings: TunnelVisionSettings = .defaults
 
-    // Nuevos ajustes
+    // Nuevos ajustes por filtro
     @Published var blurryVisionSettings: BlurryVisionSettings = .defaults
     @Published var centralScotomaSettings: CentralScotomaSettings = .defaults
     @Published var hemianopsiaSettings: HemianopsiaSettings = .defaults
+
+    // NUEVO: Síntomas combinables (post-proceso global)
+    @Published var combinedSymptomsEnabled: Bool = false
+    @Published var combinedSymptoms: CombinedSymptomsSettings = .defaults
 
     // Wrapper de ajustes según la enfermedad seleccionada
     var currentIllnessSettings: IllnessSettings? {
@@ -118,11 +122,9 @@ class MainViewModel: NSObject, ObservableObject {
 
     // Coordina TTS con el reconocimiento para evitar auto-transcripción
     func speak(_ text: String) {
-        // Pausar reconocimiento mientras habla
         speechService.pauseRecognition()
 
         let utterance = AVSpeechUtterance(string: text)
-        // Ajustar idioma del TTS según preferencias del sistema (o forzar es-ES si quieres)
         if let lang = Locale.preferredLanguages.first {
             utterance.voice = AVSpeechSynthesisVoice(language: lang)
         } else {
@@ -134,7 +136,6 @@ class MainViewModel: NSObject, ObservableObject {
         synthesizer.delegate = self
         synthesizer.speak(utterance)
 
-        // Mantener el sintetizador vivo con una clave de puntero estable
         objc_setAssociatedObject(self, &AssociatedKeys.synthKey, synthesizer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 }

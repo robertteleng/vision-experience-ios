@@ -19,10 +19,14 @@ struct CompactFiltersPanel: View {
     @Binding var macular: MacularDegenerationSettings
     @Binding var tunnel: TunnelVisionSettings
 
-    // Nuevos ajustes
+    // Nuevos ajustes de filtros
     @Binding var blurry: BlurryVisionSettings
     @Binding var scotoma: CentralScotomaSettings
     @Binding var hemianopsia: HemianopsiaSettings
+
+    // NUEVO: Síntomas combinables
+    @Binding var combinedEnabled: Bool
+    @Binding var combined: CombinedSymptomsSettings
 
     var width: CGFloat
     var sliderHeight: CGFloat
@@ -72,6 +76,9 @@ struct CompactFiltersPanel: View {
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 4)
                         }
+
+                        // Síntomas combinables (siempre visibles)
+                        combinedSymptomsSection
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 10)
@@ -127,7 +134,7 @@ struct CompactFiltersPanel: View {
     private var macularSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Degeneración macular").font(.subheadline).bold()
-            sliderRow(title: "Radio interno", value: $macular.innerRadius, range: 0...120, format: "%.0f px")
+            sliderRow(title: "Radio interno", value: $macular.innerRadius, range: 0...200, format: "%.0f px")
             sliderRow(title: "Radio externo (factor)", value: $macular.outerRadiusFactor, range: 0...1.0, format: "%.2f")
             sliderRow(title: "Desenfoque", value: $macular.blurRadius, range: 0...10, format: "%.1f px")
             sliderRow(title: "Oscurecimiento", value: $macular.darkAlpha, range: 0...1, format: "%.2f")
@@ -147,8 +154,6 @@ struct CompactFiltersPanel: View {
         .padding(.top, 6)
     }
 
-    // NUEVAS SECCIONES
-
     private var blurryVisionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Visión borrosa").font(.subheadline).bold()
@@ -163,7 +168,6 @@ struct CompactFiltersPanel: View {
             sliderRow(title: "Radio interno", value: $scotoma.innerRadius, range: 0...200, format: "%.0f px")
             sliderRow(title: "Feather (borde)", value: $scotoma.feather, range: 0...200, format: "%.0f px")
             sliderRow(title: "Opacidad", value: $scotoma.opacity, range: 0...1, format: "%.2f")
-            // Offsets normalizados (-0.5..0.5 suele ser útil; dejamos -1..1 por flexibilidad)
             sliderRow(title: "Offset X", value: $scotoma.offsetNormalizedX, range: -1...1, format: "%.2f")
             sliderRow(title: "Offset Y", value: $scotoma.offsetNormalizedY, range: -1...1, format: "%.2f")
         }
@@ -173,7 +177,6 @@ struct CompactFiltersPanel: View {
     private var hemianopsiaSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Hemianopsia").font(.subheadline).bold()
-            // Selector de lado
             HStack {
                 Text("Lado")
                     .font(.subheadline)
@@ -193,6 +196,29 @@ struct CompactFiltersPanel: View {
             sliderRow(title: "Opacidad", value: $hemianopsia.opacity, range: 0...1, format: "%.2f")
         }
         .padding(.top, 6)
+    }
+
+    // NUEVO: Sección de síntomas combinables (post-proceso global)
+    private var combinedSymptomsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Síntomas combinables").font(.subheadline).bold()
+                Spacer()
+                Toggle("Activo", isOn: $combinedEnabled)
+                    .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+            }
+            Group {
+                sliderRow(title: "Bloom intensidad", value: $combined.bloomIntensity, range: 0...1, format: "%.2f")
+                sliderRow(title: "Bloom radio (factor)", value: $combined.bloomRadiusFactor, range: 0...0.1, format: "%.3f")
+                sliderRow(title: "Contraste global", value: $combined.globalContrast, range: 0.5...1.5, format: "%.2f")
+                sliderRow(title: "Saturación global", value: $combined.globalSaturation, range: 0...1.5, format: "%.2f")
+                sliderRow(title: "Velo (opacidad)", value: $combined.veilOpacity, range: 0...0.4, format: "%.2f")
+            }
+            .disabled(!combinedEnabled)
+            .opacity(combinedEnabled ? 1.0 : 0.5)
+        }
+        .padding(.top, 12)
     }
 
     private func label(for side: HemianopsiaSide) -> String {
@@ -223,7 +249,6 @@ struct CompactFiltersPanel: View {
 }
 
 #Preview {
-    // Nota: Para el preview necesitamos bindings “dummy”.
     @State var filterEnabled = true
     @State var centralFocus = 0.5
     @State var cataracts = CataractsSettings.defaults
@@ -233,6 +258,8 @@ struct CompactFiltersPanel: View {
     @State var blurry = BlurryVisionSettings.defaults
     @State var scotoma = CentralScotomaSettings.defaults
     @State var hemianopsia = HemianopsiaSettings.defaults
+    @State var combinedEnabled = true
+    @State var combined = CombinedSymptomsSettings.defaults
 
     return CompactFiltersPanel(
         filterEnabled: $filterEnabled,
@@ -245,6 +272,8 @@ struct CompactFiltersPanel: View {
         blurry: $blurry,
         scotoma: $scotoma,
         hemianopsia: $hemianopsia,
+        combinedEnabled: $combinedEnabled,
+        combined: $combined,
         width: 320,
         sliderHeight: 30
     )

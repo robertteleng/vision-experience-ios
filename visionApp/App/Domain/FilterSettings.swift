@@ -173,6 +173,34 @@ public struct HemianopsiaSettings: Equatable, Codable {
     public static var `defaults`: HemianopsiaSettings { HemianopsiaSettings() }
 }
 
+// NUEVO: Síntomas combinables (post-proceso global)
+public struct CombinedSymptomsSettings: Equatable, Codable {
+    // Bloom/Glare
+    public var bloomIntensity: Double         // 0..1
+    public var bloomRadiusFactor: Double      // proporción del lado mínimo (0..0.1 recomendado)
+    // Controles globales
+    public var globalContrast: Double         // 0.5..1.5
+    public var globalSaturation: Double       // 0..1.5
+    // Velo/luz difusa global
+    public var veilOpacity: Double            // 0..0.4 recomendado
+
+    public init(
+        bloomIntensity: Double = 0.35,
+        bloomRadiusFactor: Double = 0.02,
+        globalContrast: Double = 1.0,
+        globalSaturation: Double = 1.0,
+        veilOpacity: Double = 0.0
+    ) {
+        self.bloomIntensity = bloomIntensity
+        self.bloomRadiusFactor = bloomRadiusFactor
+        self.globalContrast = globalContrast
+        self.globalSaturation = globalSaturation
+        self.veilOpacity = veilOpacity
+    }
+
+    public static var `defaults`: CombinedSymptomsSettings { CombinedSymptomsSettings() }
+}
+
 // MARK: - Wrapper de ajustes por tipo de enfermedad
 
 public enum IllnessSettings: Equatable, Codable {
@@ -186,3 +214,4 @@ public enum IllnessSettings: Equatable, Codable {
     case centralScotoma(CentralScotomaSettings)
     case hemianopsia(HemianopsiaSettings)
 }
+

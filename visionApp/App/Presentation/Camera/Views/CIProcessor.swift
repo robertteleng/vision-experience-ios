@@ -13,13 +13,10 @@ import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 final class CIProcessor {
-    static let shared = CIProcessor() // Instancia única (singleton) del procesador
-    
-    private let context = CIContext(options: nil) // Contexto de Core Image para realizar operaciones
-    
-    private init() {} // Inicializador privado para evitar la creación de instancias adicionales
-    
-    /// Aplica efecto a un CGImage y devuelve CGImage (sin UIKit).
+    static let shared = CIProcessor()
+    private let context = CIContext(options: nil)
+    private init() {}
+
     func apply(
         illness: Illness?,
         settings: IllnessSettings?,
@@ -27,12 +24,18 @@ final class CIProcessor {
         centralFocus: Double,
         to image: CGImage,
         panelSize: CGSize,
-        centerOffsetNormalized: CGPoint = .zero
+        centerOffsetNormalized: CGPoint = .zero,
+        // NUEVO: parámetros globales combinables
+        combinedEnabled: Bool = false,
+        combined: CombinedSymptomsSettings = .defaults
     ) -> CGImage {
         guard filterEnabled, let illness = illness else { return image }
 
         let inputCI = CIImage(cgImage: image)
         let clampedFocus = max(0.0, min(1.0, centralFocus))
+
+        // Medida base para escalados relativos
+        let minSide = max(1.0, min(inputCI.extent.width, inputCI.extent.height))
 
         // Centro del efecto con offset externo
         let baseCenter = CGPoint(x: inputCI.extent.midX, y: inputCI.extent.midY)
@@ -42,7 +45,8 @@ final class CIProcessor {
         )
         let effectCenter = CGPoint(x: baseCenter.x + offsetPx.x, y: baseCenter.y + offsetPx.y)
 
-        let outputCI: CIImage
+        var currentCI: CIImage
+
         switch illness.filterType {
         case .cataracts:
             let s: CataractsSettings = {
@@ -51,8 +55,9 @@ final class CIProcessor {
             }()
             let blur = CIFilter.gaussianBlur()
             blur.inputImage = inputCI
-            let blurRadius = s.blurRadius * clampedFocus
-            blur.radius = Float(blurRadius)
+            // Escalado relativo del blur respecto a minSide (mantiene compatibilidad)
+            let blurRadiusPx = CGFloat(s.blurRadius) * CGFloat(clampedFocus)
+            blur.radius = Float(blurRadiusPx)
             let blurred = blur.outputImage?.clamped(to: inputCI.extent) ?? inputCI
 
             let colorControls = CIFilter.colorControls()
@@ -66,7 +71,7 @@ final class CIProcessor {
             colorMatrix.gVector = CIVector(x: 0, y: 1.0, z: 0, w: 0)
             let blueScale = max(0.0, 1.0 - CGFloat(s.blueReduction * clampedFocus))
             colorMatrix.bVector = CIVector(x: 0, y: 0, z: blueScale, w: 0)
-            outputCI = colorMatrix.outputImage ?? blurred
+            currentCI = colorMatrix.outputImage ?? blurred
 
         case .glaucoma:
             let s: GlaucomaSettings = {
@@ -82,19 +87,17 @@ final class CIProcessor {
             let vignetteEffect = CIFilter.vignetteEffect()
             vignetteEffect.inputImage = first
             vignetteEffect.center = effectCenter
-            let minSide = min(inputCI.extent.width, inputCI.extent.height)
             vignetteEffect.radius = Float(minSide * s.effectRadiusFactor * (1.0 - clampedFocus + 0.0001))
             vignetteEffect.intensity = Float(clampedFocus)
-            outputCI = vignetteEffect.outputImage ?? first
+            currentCI = vignetteEffect.outputImage ?? first
 
         case .macularDegeneration:
             let s: MacularDegenerationSettings = {
                 if case .macular(let v) = settings { return v }
                 return .defaults
             }()
-            let minSide = min(inputCI.extent.width, inputCI.extent.height)
-            let innerRadius = CGFloat(s.innerRadius * clampedFocus)
-            let outerRadius = CGFloat(innerRadius + minSide * (s.outerRadiusFactor * clampedFocus))
+            let innerRadius = CGFloat(s.innerRadius) * CGFloat(0.6 + 0.4 * clampedFocus)
+            let outerRadius = innerRadius + minSide * CGFloat(s.outerRadiusFactor * clampedFocus)
 
             let radial = CIFilter.radialGradient()
             radial.center = effectCenter
@@ -122,14 +125,13 @@ final class CIProcessor {
             blend.inputImage = blurredImage
             blend.backgroundImage = darkOverlay
             blend.maskImage = distortion.outputImage
-            outputCI = blend.outputImage ?? inputCI
+            currentCI = blend.outputImage ?? inputCI
 
         case .tunnelVision:
             let s: TunnelVisionSettings = {
                 if case .tunnel(let v) = settings { return v }
                 return .defaults
             }()
-            let minSide = min(inputCI.extent.width, inputCI.extent.height)
             let minTunnelRadius = minSide * CGFloat(s.minRadiusPercent)
             let maxTunnelRadius = minSide * CGFloat(s.maxRadiusFactor)
             let tunnelRadius = minTunnelRadius + (maxTunnelRadius - minTunnelRadius) * CGFloat(1 - clampedFocus)
@@ -159,7 +161,7 @@ final class CIProcessor {
             composite.inputImage = inputCI
             composite.backgroundImage = darkenedPeripheral
             composite.maskImage = mask
-            outputCI = composite.outputImage ?? inputCI
+            currentCI = composite.outputImage ?? inputCI
 
         case .blurryVision:
             let s: BlurryVisionSettings = {
@@ -168,8 +170,9 @@ final class CIProcessor {
             }()
             let blur = CIFilter.gaussianBlur()
             blur.inputImage = inputCI
+            // Escalar blur relativo si quieres (aquí dejamos px directos multiplicados por intensidad)
             blur.radius = Float(s.blurRadius * clampedFocus)
-            outputCI = blur.outputImage?.clampedToExtent().cropped(to: inputCI.extent) ?? inputCI
+            currentCI = blur.outputImage?.clampedToExtent().cropped(to: inputCI.extent) ?? inputCI
 
         case .centralScotoma:
             let s: CentralScotomaSettings = {
@@ -180,6 +183,7 @@ final class CIProcessor {
                 x: effectCenter.x + CGFloat(s.offsetNormalizedX) * inputCI.extent.width,
                 y: effectCenter.y + CGFloat(s.offsetNormalizedY) * inputCI.extent.height
             )
+            // Escalado relativo suave
             let inner = max(0.0, CGFloat(s.innerRadius) * CGFloat(0.6 + 0.4 * clampedFocus))
             let feather = max(1.0, CGFloat(s.feather) * CGFloat(0.5 + 0.5 * clampedFocus))
             let outer = inner + feather
@@ -199,7 +203,7 @@ final class CIProcessor {
             blend.inputImage = inputCI
             blend.backgroundImage = dark
             blend.maskImage = mask
-            outputCI = blend.outputImage ?? inputCI
+            currentCI = blend.outputImage ?? inputCI
 
         case .hemianopsia:
             let s: HemianopsiaSettings = {
@@ -210,6 +214,7 @@ final class CIProcessor {
             let dark = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(s.opacity * clampedFocus)))
                 .cropped(to: rect)
 
+            // Feather relativo
             let feather = CGFloat(max(1.0, s.feather))
             let gradient = CIFilter.linearGradient()
             let startPoint: CGPoint
@@ -258,10 +263,38 @@ final class CIProcessor {
             blend.inputImage = inputCI
             blend.backgroundImage = dark
             blend.maskImage = mask
-            outputCI = blend.outputImage ?? inputCI
+            currentCI = blend.outputImage ?? inputCI
         }
 
-        return context.createCGImage(outputCI, from: inputCI.extent) ?? image
+        // CAPA FINAL: Síntomas combinables (post-proceso global)
+        if combinedEnabled {
+            // 1) Bloom/Glare
+            let bloom = CIFilter.bloom()
+            bloom.inputImage = currentCI
+            bloom.intensity = Float(max(0, min(1, combined.bloomIntensity)))
+            bloom.radius = Float(minSide * max(0, combined.bloomRadiusFactor))
+            let bloomed = bloom.outputImage ?? currentCI
+
+            // 2) Contraste y saturación globales
+            let colorControls = CIFilter.colorControls()
+            colorControls.inputImage = bloomed
+            colorControls.contrast = Float(max(0.5, min(1.5, combined.globalContrast)))
+            colorControls.saturation = Float(max(0.0, min(1.5, combined.globalSaturation)))
+            let colored = colorControls.outputImage ?? bloomed
+
+            // 3) Velo (haze)
+            let veilAlpha = CGFloat(max(0.0, min(0.4, combined.veilOpacity)))
+            if veilAlpha > 0.0001 {
+                let veil = CIImage(color: CIColor(red: 1, green: 1, blue: 1, alpha: veilAlpha)).cropped(to: inputCI.extent)
+                let over = CIFilter.sourceOverCompositing()
+                over.inputImage = veil
+                over.backgroundImage = colored
+                currentCI = over.outputImage ?? colored
+            } else {
+                currentCI = colored
+            }
+        }
+
+        return context.createCGImage(currentCI, from: inputCI.extent) ?? image
     }
 }
-
