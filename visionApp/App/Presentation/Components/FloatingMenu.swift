@@ -112,6 +112,8 @@ struct FloatingMenu: View {
                     blurry: $mainViewModel.blurryVisionSettings,
                     scotoma: $mainViewModel.centralScotomaSettings,
                     hemianopsia: $mainViewModel.hemianopsiaSettings,
+                    combinedEnabled: $mainViewModel.combinedSymptomsEnabled,
+                    combined: $mainViewModel.combinedSymptoms,
                     width: sliderWidth,
                     sliderHeight: sliderHeight
                 )
