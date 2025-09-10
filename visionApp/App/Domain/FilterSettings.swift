@@ -8,16 +8,16 @@
 import Foundation
 import CoreGraphics
 
-// MARK: - Ajustes específicos por filtro
+// MARK: - Filter-specific settings
 
 public struct CataractsSettings: Equatable, Codable {
-    // Desenfoque gaussiano (px)
+    // Gaussian blur radius (in pixels)
     public var blurRadius: Double
-    // Reducción de contraste (0 = sin cambio, 1 = contraste 0)
+    // Contrast reduction (0 = no change, 1 = full contrast removal)
     public var contrastReduction: Double
-    // Reducción de saturación (0 = sin cambio, 1 = saturación 0)
+    // Saturation reduction (0 = no change, 1 = full desaturation)
     public var saturationReduction: Double
-    // Reducción del canal azul para simular tinte amarillento (0..1)
+    // Blue channel reduction to simulate yellowish tint (0..1)
     public var blueReduction: Double
 
     public init(
@@ -36,11 +36,11 @@ public struct CataractsSettings: Equatable, Codable {
 }
 
 public struct GlaucomaSettings: Equatable, Codable {
-    // Intensidad del viñeteado base (CIFilter.vignette.intensity)
+    // Base vignette intensity (CIFilter.vignette.intensity)
     public var vignetteIntensity: Double
-    // Factor del radio del viñeteado base (CIFilter.vignette.radius)
+    // Base vignette radius factor (CIFilter.vignette.radius)
     public var vignetteRadiusFactor: Double
-    // Factor del radio del efecto de viñeteado centrado (relativo al lado mínimo)
+    // Effect radius factor for centered vignette (relative to the shorter image side)
     public var effectRadiusFactor: Double
 
     public init(
@@ -57,15 +57,15 @@ public struct GlaucomaSettings: Equatable, Codable {
 }
 
 public struct MacularDegenerationSettings: Equatable, Codable {
-    // Radio interno del área central afectada (px)
+    // Inner radius of the affected central area (in pixels)
     public var innerRadius: Double
-    // Factor del radio externo relativo al lado mínimo (0..1)
+    // Outer radius factor relative to the shorter image side (0..1)
     public var outerRadiusFactor: Double
-    // Desenfoque aplicado a la imagen (px)
+    // Applied blur radius (in pixels)
     public var blurRadius: Double
-    // Opacidad de oscurecimiento (0..1)
+    // Darkness opacity (0..1)
     public var darkAlpha: Double
-    // Ángulo de distorsión (radianes)
+    // Distortion angle (in radians)
     public var twirlAngle: Double
 
     public init(
@@ -86,13 +86,13 @@ public struct MacularDegenerationSettings: Equatable, Codable {
 }
 
 public struct TunnelVisionSettings: Equatable, Codable {
-    // Porcentaje del lado mínimo para el radio mínimo del túnel (0..1)
+    // Minimum tunnel radius as a percentage of the shorter image side (0..1)
     public var minRadiusPercent: Double
-    // Factor del lado mínimo para el radio máximo del túnel
+    // Maximum tunnel radius factor relative to the shorter image side
     public var maxRadiusFactor: Double
-    // Desenfoque periférico (px)
+    // Peripheral blur radius (in pixels)
     public var blurRadius: Double
-    // Factor base para el feather (suavizado del borde)
+    // Base feather factor for edge smoothing
     public var featherFactorBase: Double
 
     public init(
@@ -110,7 +110,7 @@ public struct TunnelVisionSettings: Equatable, Codable {
     public static var `defaults`: TunnelVisionSettings { TunnelVisionSettings() }
 }
 
-// MARK: - Wrapper de ajustes por tipo de enfermedad
+// MARK: - Settings wrapper by illness type
 
 public enum IllnessSettings: Equatable, Codable {
     case cataracts(CataractsSettings)
