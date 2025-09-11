@@ -58,15 +58,15 @@ struct CardboardView: View {
 }
 
 
-// Cataracts preview
-#Preview {
-    CardboardView(
-        cameraService: CameraViewModel().cameraService,
-        illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
-        centralFocus: 0.5,
-        filterEnabled: true,
-        illnessSettings: .cataracts(.defaults),
-        deviceOrientation: .portrait
-    )
-}
+//// Cataracts preview
+//#Preview {
+//    CardboardView(
+//        cameraService: CameraViewModel().cameraService,
+//        illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
+//        centralFocus: 0.5,
+//        filterEnabled: true,
+//        illnessSettings: .cataracts(.defaults),
+//        deviceOrientation: .portrait
+//    )
+//}
 
