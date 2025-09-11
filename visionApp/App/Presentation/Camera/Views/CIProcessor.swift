@@ -1,3 +1,4 @@
+//
 //  CIProcessor.swift
 //  visionApp
 //
@@ -18,7 +19,17 @@ final class CIProcessor {
     
     private init() {} // Inicializador privado para evitar la creación de instancias adicionales
     
-    /// Aplica efecto a un CGImage y devuelve CGImagePonme.
+    /// Aplica distorsión barrel para lentes Cardboard
+    private func applyBarrelDistortion(_ image: CIImage) -> CIImage {
+        let bumpDistortion = CIFilter.bumpDistortion()
+        bumpDistortion.inputImage = image
+        bumpDistortion.center = CGPoint(x: image.extent.midX, y: image.extent.midY)
+        bumpDistortion.radius = Float(min(image.extent.width, image.extent.height) * 0.4)
+        bumpDistortion.scale = -0.5 // Negativo para barrel (hacia adentro)
+        return bumpDistortion.outputImage ?? image
+    }
+    
+    /// Aplica efecto a un CGImage y devuelve CGImage (sin UIKit).
     func apply(
         illness: Illness?, // Enfermedad a la cual se aplicará el efecto
         settings: IllnessSettings?, // Ajustes específicos por enfermedad
@@ -27,28 +38,31 @@ final class CIProcessor {
         to image: CGImage, // Imagen de entrada
         panelSize: CGSize, // Tamaño del panel para la imagen
         centerOffsetNormalized: CGPoint = .zero, // Desplazamiento normalizado para centrar el efecto
-        vrOffset: CGPoint = .zero // NUEVO: Offset para VR
+        vrOffset: CGPoint = .zero // Offset para VR
     ) -> CGImage {
         
         let inputCI = CIImage(cgImage: image)
         
-        // NUEVO: Aplicar offset VR si es necesario
-        let baseImage = vrOffset == .zero ? inputCI :
+        // PASO 1: Aplicar offset VR si es necesario
+        let offsetImage = vrOffset == .zero ? inputCI :
             inputCI.transformed(by: CGAffineTransform(translationX: vrOffset.x, y: vrOffset.y))
         
-        // Si no hay enfermedad o el filtro está desactivado, devolvemos la imagen con offset aplicado
+        // PASO 2: Aplicar distorsión barrel para Cardboard (solo para panels izq/der)
+        let barrelCorrected = (vrOffset == .zero) ? offsetImage : applyBarrelDistortion(offsetImage)
+        
+        // PASO 3: Si no hay enfermedad o filtro desactivado, devolvemos imagen con correcciones aplicadas
         guard filterEnabled, let illness = illness else {
-            return context.createCGImage(baseImage, from: inputCI.extent) ?? image
+            return context.createCGImage(barrelCorrected, from: inputCI.extent) ?? image
         }
 
         let clampedFocus = max(0.0, min(1.0, centralFocus))
 
-        // Centro del efecto con offset (ahora sobre baseImage)
-        let baseCenterX = baseImage.extent.midX
-        let baseCenterY = baseImage.extent.midY
+        // Centro del efecto con offset (ahora sobre barrelCorrected)
+        let baseCenterX = barrelCorrected.extent.midX
+        let baseCenterY = barrelCorrected.extent.midY
         let offsetPx = CGPoint(
-            x: centerOffsetNormalized.x * baseImage.extent.width,
-            y: centerOffsetNormalized.y * baseImage.extent.height
+            x: centerOffsetNormalized.x * barrelCorrected.extent.width,
+            y: centerOffsetNormalized.y * barrelCorrected.extent.height
         )
         let effectCenter = CGPoint(x: baseCenterX + offsetPx.x, y: baseCenterY + offsetPx.y)
 
@@ -62,10 +76,10 @@ final class CIProcessor {
             }()
             // Aplicamos parámetros modulados por centralFocus como factor global
             let blur = CIFilter.gaussianBlur()
-            blur.inputImage = baseImage  // CAMBIO: usar baseImage
+            blur.inputImage = barrelCorrected  // Usar imagen con corrección barrel
             let blurRadius = s.blurRadius * clampedFocus
             blur.radius = Float(blurRadius)
-            let blurred = blur.outputImage?.clamped(to: baseImage.extent) ?? baseImage
+            let blurred = blur.outputImage?.clamped(to: barrelCorrected.extent) ?? barrelCorrected
 
             let colorControls = CIFilter.colorControls()
             colorControls.inputImage = blurred
@@ -87,15 +101,15 @@ final class CIProcessor {
                 return .defaults
             }()
             let vignette = CIFilter.vignette()
-            vignette.inputImage = baseImage  // CAMBIO: usar baseImage
+            vignette.inputImage = barrelCorrected
             vignette.intensity = Float((0.8 + s.vignetteIntensity * 1.2) * clampedFocus)
             vignette.radius = Float(0.8 + s.vignetteRadiusFactor * 1.0)
-            let first = vignette.outputImage ?? baseImage
+            let first = vignette.outputImage ?? barrelCorrected
 
             let vignetteEffect = CIFilter.vignetteEffect()
             vignetteEffect.inputImage = first
             vignetteEffect.center = effectCenter
-            let minSide = min(baseImage.extent.width, baseImage.extent.height)  // CAMBIO: usar baseImage
+            let minSide = min(barrelCorrected.extent.width, barrelCorrected.extent.height)
             vignetteEffect.radius = Float(minSide * s.effectRadiusFactor * (1.0 - clampedFocus + 0.0001))
             vignetteEffect.intensity = Float(clampedFocus)
             outputCI = vignetteEffect.outputImage ?? first
@@ -105,7 +119,7 @@ final class CIProcessor {
                 if case .macular(let v) = settings { return v }
                 return .defaults
             }()
-            let minSide = min(baseImage.extent.width, baseImage.extent.height)  // CAMBIO: usar baseImage
+            let minSide = min(barrelCorrected.extent.width, barrelCorrected.extent.height)
             let innerRadius = CGFloat(s.innerRadius * clampedFocus)
             let outerRadius = CGFloat(innerRadius + minSide * (s.outerRadiusFactor * clampedFocus))
 
@@ -115,15 +129,15 @@ final class CIProcessor {
             radial.radius1 = Float(outerRadius)
             radial.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
             radial.color1 = CIColor(red: 1, green: 1, blue: 1, alpha: 1)
-            let gradient = radial.outputImage?.cropped(to: baseImage.extent) ?? baseImage  // CAMBIO: usar baseImage
+            let gradient = radial.outputImage?.cropped(to: barrelCorrected.extent) ?? barrelCorrected
 
             let blurFilter = CIFilter.gaussianBlur()
-            blurFilter.inputImage = baseImage  // CAMBIO: usar baseImage
+            blurFilter.inputImage = barrelCorrected
             blurFilter.radius = Float(s.blurRadius * clampedFocus)
-            let blurredImage = blurFilter.outputImage?.clamped(to: baseImage.extent) ?? baseImage
+            let blurredImage = blurFilter.outputImage?.clamped(to: barrelCorrected.extent) ?? barrelCorrected
 
             let darkColor = CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(s.darkAlpha * clampedFocus))
-            let darkOverlay = CIImage(color: darkColor).cropped(to: baseImage.extent)  // CAMBIO: usar baseImage
+            let darkOverlay = CIImage(color: darkColor).cropped(to: barrelCorrected.extent)
 
             let distortion = CIFilter.twirlDistortion()
             distortion.inputImage = gradient
@@ -136,22 +150,22 @@ final class CIProcessor {
             blend.backgroundImage = darkOverlay
             blend.maskImage = distortion.outputImage
 
-            outputCI = blend.outputImage ?? baseImage  // CAMBIO: usar baseImage
+            outputCI = blend.outputImage ?? barrelCorrected
 
         case .tunnelVision:
             let s: TunnelVisionSettings = {
                 if case .tunnel(let v) = settings { return v }
                 return .defaults
             }()
-            let minSide = min(baseImage.extent.width, baseImage.extent.height)  // CAMBIO: usar baseImage
+            let minSide = min(barrelCorrected.extent.width, barrelCorrected.extent.height)
             let minTunnelRadius = minSide * CGFloat(s.minRadiusPercent)
             let maxTunnelRadius = minSide * CGFloat(s.maxRadiusFactor)
             let tunnelRadius = minTunnelRadius + (maxTunnelRadius - minTunnelRadius) * CGFloat(1 - clampedFocus)
 
             let blurFilter = CIFilter.gaussianBlur()
-            blurFilter.inputImage = baseImage  // CAMBIO: usar baseImage
+            blurFilter.inputImage = barrelCorrected
             blurFilter.radius = Float((s.blurRadius * (0.4 + 0.6 * (1.0 - clampedFocus))))
-            let blurred = blurFilter.outputImage?.clampedToExtent().cropped(to: baseImage.extent) ?? baseImage
+            let blurred = blurFilter.outputImage?.clampedToExtent().cropped(to: barrelCorrected.extent) ?? barrelCorrected
 
             let feather = tunnelRadius * CGFloat(s.featherFactorBase * (0.8 + 0.2 * (1.0 - clampedFocus)))
             let outerRadius = tunnelRadius + feather
@@ -162,18 +176,18 @@ final class CIProcessor {
             radial.radius1 = Float(outerRadius)
             radial.color0 = CIColor(red: 1, green: 1, blue: 1, alpha: 1)
             radial.color1 = CIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            let mask = radial.outputImage?.cropped(to: baseImage.extent) ?? baseImage
+            let mask = radial.outputImage?.cropped(to: barrelCorrected.extent) ?? barrelCorrected
 
             let multiply = CIFilter.multiplyCompositing()
             multiply.inputImage = mask
             multiply.backgroundImage = blurred
-            let darkenedPeripheral = multiply.outputImage?.cropped(to: baseImage.extent) ?? blurred
+            let darkenedPeripheral = multiply.outputImage?.cropped(to: barrelCorrected.extent) ?? blurred
 
             let composite = CIFilter.blendWithMask()
-            composite.inputImage = baseImage  // CAMBIO: usar baseImage
+            composite.inputImage = barrelCorrected
             composite.backgroundImage = darkenedPeripheral
             composite.maskImage = mask
-            outputCI = composite.outputImage ?? baseImage  // CAMBIO: usar baseImage
+            outputCI = composite.outputImage ?? barrelCorrected
         }
 
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image
