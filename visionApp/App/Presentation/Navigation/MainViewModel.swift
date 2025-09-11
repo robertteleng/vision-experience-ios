@@ -21,6 +21,9 @@ class MainViewModel: ObservableObject {
     @Published var macularDegenerationSettings: MacularDegenerationSettings = .defaults
     @Published var tunnelVisionSettings: TunnelVisionSettings = .defaults
 
+    // ✅ AÑADIDO: Para saber en qué pantalla estamos
+    @Published var currentRoute: AppRoute = .splash
+
     // Wrapper de ajustes según la enfermedad seleccionada
     var currentIllnessSettings: IllnessSettings? {
         guard let type = selectedIllness?.filterType else { return nil }
@@ -39,9 +42,12 @@ class MainViewModel: ObservableObject {
     @ObservedObject var speechService: SpeechRecognitionService
     private var cancellables = Set<AnyCancellable>()
     
-    // ✅ AÑADIDO: Speech synthesizer reutilizable
     private let speechSynthesizer = AVSpeechSynthesizer()
-
+    
+    // Control de cooldown para comandos
+    private var lastCommandTime: Date = Date.distantPast
+    private let commandCooldown: TimeInterval = 1.5 // Reducido para mejor UX
+    
     var navigateToIllnessList: (() -> Void)?
 
     init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
@@ -50,7 +56,6 @@ class MainViewModel: ObservableObject {
         requestSpeechAuthorization()
     }
     
-    // ✅ AÑADIDO: Solicitar permisos al inicializar
     private func requestSpeechAuthorization() {
         speechService.requestAuthorization { authorized in
             if authorized {
@@ -70,7 +75,6 @@ class MainViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // ✅ AÑADIDO: Observar errores del speech service
         speechService.$error
             .compactMap { $0 }
             .sink { error in
@@ -79,124 +83,262 @@ class MainViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // ✅ MEJORADO: Función separada para procesar comandos con más opciones
-    private func processVoiceCommand(_ command: String) {
-        print("🎤 Processing voice command: \(command)")
+    // ✅ MEJORADO: Extracción de comandos con más contexto
+    private func extractValidCommand(from text: String) -> String? {
+        let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Comando para volver atrás (español e inglés)
-        if command.contains("volver") || command.contains("atrás") || command.contains("back") || command.contains("go back") {
-            navigateToIllnessList?()
-            speak("Volviendo a la selección de enfermedad")
+        // Comandos organizados por contexto
+        let allCommands: [(keywords: [String], command: String, contexts: [AppRoute])] = [
+            // Comandos de navegación (disponibles en todas las pantallas)
+            (["atrás", "volver", "back", "go back"], "atras", [.camera, .illnessList]),
+            (["lista", "menu", "list", "enfermedades"], "lista", [.camera]),
+            (["cámara", "camera"], "camera", [.illnessList]),
+            
+            // Comandos de enfermedades (útiles en lista Y cámara)
+            (["cataratas", "cataracts"], "cataratas", [.illnessList, .camera]),
+            (["glaucoma"], "glaucoma", [.illnessList, .camera]),
+            (["macular", "degeneración macular"], "macular", [.illnessList, .camera]),
+            (["túnel", "tunel", "tunnel", "visión de túnel"], "tunel", [.illnessList, .camera]),
+            
+            // Comandos de control (solo en cámara)
+            (["más", "aumentar", "increase", "more", "stronger"], "mas", [.camera]),
+            (["menos", "disminuir", "decrease", "less", "weaker"], "menos", [.camera]),
+            (["activar", "encender", "enable", "on"], "activar", [.camera]),
+            (["desactivar", "apagar", "disable", "off"], "desactivar", [.camera]),
+            (["realidad virtual", "vr", "cardboard", "gafas"], "vr", [.camera]),
+            (["salir vr", "exit vr", "quit vr"], "salir_vr", [.camera]),
+            
+            // Comandos de ayuda (disponibles siempre)
+            (["ayuda", "help", "comandos"], "ayuda", [.illnessList, .camera])
+        ]
+        
+        // Filtrar comandos válidos para el contexto actual
+        let validCommandsForContext = allCommands.filter { command in
+            command.contexts.contains(currentRoute)
+        }
+        
+        // Buscar el comando más específico
+        for (keywords, command, _) in validCommandsForContext {
+            for keyword in keywords {
+                if cleanText.contains(keyword) {
+                    // Verificar que no es parte de una conversación muy larga
+                    let words = cleanText.components(separatedBy: " ")
+                    if words.count <= 12 {
+                        return command
+                    }
+                    
+                    // O si la palabra clave está cerca del final
+                    if let range = cleanText.range(of: keyword) {
+                        let afterKeyword = cleanText[range.upperBound...]
+                        if afterKeyword.count <= 20 {
+                            return command
+                        }
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func processVoiceCommand(_ fullText: String) {
+        print("🎤 Raw text: '\(fullText)' in context: \(currentRoute)")
+        
+        // Verificar cooldown
+        let now = Date()
+        guard now.timeIntervalSince(lastCommandTime) > commandCooldown else {
+            print("⏰ Command cooldown active")
+            return
+        }
+        
+        // Extraer comando válido
+        guard let command = extractValidCommand(from: fullText) else {
+            print("❌ No valid command found for context \(currentRoute)")
+            return
+        }
+        
+        print("✅ Executing command: '\(command)' in context: \(currentRoute)")
+        lastCommandTime = now
+        
+        // Ejecutar comando
+        executeCommand(command)
+    }
+    
+    // ✅ MEJORADO: Comandos contextuales
+    private func executeCommand(_ command: String) {
+        switch command {
+        // Navegación
+        case "atras":
+            if currentRoute == .camera {
+                navigateToIllnessList?()
+                speak("Volviendo")
+            }
             provideFeedback()
-            return
-        }
-        
-        // ✅ AÑADIDO: Comandos para controlar intensidad
-        if command.contains("aumentar") || command.contains("más") || command.contains("increase") || command.contains("more") || command.contains("stronger") {
-            centralFocus = min(1.0, centralFocus + 0.2)
-            speak("Intensidad aumentada")
+            
+        case "lista":
+            if currentRoute == .camera {
+                navigateToIllnessList?()
+                speak("Lista de enfermedades")
+            }
             provideFeedback()
-            return
-        }
-        
-        if command.contains("disminuir") || command.contains("menos") || command.contains("decrease") || command.contains("less") || command.contains("weaker") {
-            centralFocus = max(0.0, centralFocus - 0.2)
-            speak("Intensidad reducida")
+            
+        case "camera":
+            if currentRoute == .illnessList && selectedIllness != nil {
+                // MainView manejará la navegación automáticamente
+                speak("Abriendo cámara")
+            }
             provideFeedback()
-            return
-        }
-        
-        // ✅ AÑADIDO: Comandos para activar/desactivar filtros
-        if command.contains("activar filtro") || command.contains("enable filter") || command.contains("encender") {
-            filterEnabled = true
-            speak("Filtro activado")
-            provideFeedback()
-            return
-        }
-        
-        if command.contains("desactivar filtro") || command.contains("disable filter") || command.contains("apagar") {
-            filterEnabled = false
-            speak("Filtro desactivado")
-            provideFeedback()
-            return
-        }
-        
-        // ✅ AÑADIDO: Comando para salir del modo VR
-        if command.contains("salir") || command.contains("exit") || command.contains("stop vr") || command.contains("quit") {
-            isCardboardMode = false
-            speak("Saliendo del modo realidad virtual")
-            provideFeedback()
-            return
-        }
-        
-        // ✅ AÑADIDO: Comando para ayuda
-        if command.contains("ayuda") || command.contains("help") || command.contains("comandos") {
-            speak("Puedes decir: cataratas, glaucoma, macular, túnel, aumentar, disminuir, activar filtro, desactivar filtro, salir, volver")
-            return
-        }
-        
-        // Comandos para cambiar enfermedad
-        if command.contains("cataracts") || command.contains("cataratas") {
+            
+        // Control de intensidad (solo en cámara)
+        case "mas":
+            if currentRoute == .camera {
+                let oldValue = centralFocus
+                centralFocus = min(1.0, centralFocus + 0.3)
+                if centralFocus > oldValue {
+                    speak("Más intenso")
+                    provideFeedback()
+                }
+            }
+            
+        case "menos":
+            if currentRoute == .camera {
+                let oldValue = centralFocus
+                centralFocus = max(0.0, centralFocus - 0.3)
+                if centralFocus < oldValue {
+                    speak("Menos intenso")
+                    provideFeedback()
+                }
+            }
+            
+        case "activar":
+            if currentRoute == .camera && !filterEnabled {
+                filterEnabled = true
+                speak("Filtro activado")
+                provideFeedback()
+            }
+            
+        case "desactivar":
+            if currentRoute == .camera && filterEnabled {
+                filterEnabled = false
+                speak("Filtro desactivado")
+                provideFeedback()
+            }
+            
+        case "vr":
+            if currentRoute == .camera && !isCardboardMode {
+                isCardboardMode = true
+                speak("Modo realidad virtual")
+                provideFeedback()
+            }
+            
+        case "salir_vr":
+            if currentRoute == .camera && isCardboardMode {
+                isCardboardMode = false
+                speak("Saliendo del modo VR")
+                provideFeedback()
+            }
+            
+        // Comandos de ayuda contextual
+        case "ayuda":
+            let helpText = getContextualHelp()
+            speak(helpText)
+            
+        // Enfermedades (funcionan en lista y cámara)
+        case "cataratas":
             selectedIllness = Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts)
-            speak("Filtro de cataratas activado")
+            speak("Cataratas")
             provideFeedback()
-        } else if command.contains("glaucoma") {
+            
+        case "glaucoma":
             selectedIllness = Illness(name: "Glaucoma", description: "Simula visión con glaucoma.", filterType: .glaucoma)
-            speak("Filtro de glaucoma activado")
+            speak("Glaucoma")
             provideFeedback()
-        } else if command.contains("macular") || command.contains("degeneración macular") {
+            
+        case "macular":
             selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
-            speak("Filtro de degeneración macular activado")
+            speak("Degeneración macular")
             provideFeedback()
-        } else if command.contains("tunnel vision") || command.contains("visión de túnel") || command.contains("vision de tunel") || command.contains("túnel") || command.contains("tunel") {
+            
+        case "tunel":
             selectedIllness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
-            speak("Filtro de visión en túnel activado")
+            speak("Visión túnel")
             provideFeedback()
+            
+        default:
+            print("⚠️ Unknown command: \(command)")
         }
     }
     
-    // ✅ AÑADIDO: Feedback háptico para confirmar comandos
-    private func provideFeedback() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+    // ✅ NUEVO: Ayuda contextual
+    private func getContextualHelp() -> String {
+        switch currentRoute {
+        case .illnessList:
+            return "Di: cataratas, glaucoma, macular, túnel para seleccionar una enfermedad"
+        case .camera:
+            return "Di: cataratas, glaucoma, macular, túnel, más, menos, activar, desactivar, realidad virtual, atrás"
+        case .splash:
+            return "Espera a que cargue la aplicación"
+        }
     }
-
-    func speak(_ text: String) {
-        // ✅ MEJORADO: Cancelar speech anterior antes de hablar
+    
+    private func speak(_ text: String) {
         if speechSynthesizer.isSpeaking {
             speechSynthesizer.stopSpeaking(at: .immediate)
         }
         
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "es-ES") // Español
-        utterance.rate = 0.5 // Velocidad media
-        utterance.volume = 0.8 // Volumen alto pero no máximo
+        utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
+        utterance.rate = 0.6
+        utterance.volume = 0.8
+        utterance.pitchMultiplier = 1.0
         
         speechSynthesizer.speak(utterance)
+        print("🔊 Speaking: '\(text)'")
     }
     
-    // ✅ AÑADIDO: Métodos públicos para controlar speech recognition
+    private func provideFeedback() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+    
+    // ✅ MEJORADO: Métodos públicos con logging
     func startSpeechRecognition() {
+        guard !speechService.isListening else { return }
         speechService.startRecognition()
+        print("🎤 Speech recognition started globally")
     }
     
     func stopSpeechRecognition() {
+        guard speechService.isListening else { return }
         speechService.stopRecognition()
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+        print("🛑 Speech recognition stopped globally")
     }
     
     func toggleSpeechRecognition() {
         if speechService.isListening {
-            speechService.stopRecognition()
+            stopSpeechRecognition()
         } else {
-            speechService.startRecognition()
+            startSpeechRecognition()
         }
     }
     
-    // ✅ AÑADIDO: Cleanup al destruir
+    // ✅ NUEVO: Actualizar contexto actual
+    func updateCurrentRoute(_ route: AppRoute) {
+        currentRoute = route
+        print("📍 Current route updated to: \(route)")
+    }
+    
+    func testVoiceCommand(_ command: String) {
+        print("🧪 Testing command: '\(command)'")
+        processVoiceCommand(command)
+    }
+    
     deinit {
         speechService.stopRecognition()
         speechSynthesizer.stopSpeaking(at: .immediate)
         cancellables.forEach { $0.cancel() }
     }
 }
-

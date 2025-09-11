@@ -56,9 +56,16 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         }
 
         group.enter()
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            micOK = granted
-            group.leave()
+        if #available(iOS 17.0, *) {
+            AVAudioApplication.requestRecordPermission { granted in
+                micOK = granted
+                group.leave()
+            }
+        } else {
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                micOK = granted
+                group.leave()
+            }
         }
 
         group.notify(queue: .main) {
@@ -125,7 +132,7 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     private func configureAudioSession() throws {
         let audioSession = AVAudioSession.sharedInstance()
         // .playAndRecord ayuda si combinamos con reproducción; duckOthers reduce el volumen de otros audios
-        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
+        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP])
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
@@ -268,3 +275,4 @@ extension SpeechRecognitionService: SFSpeechRecognizerDelegate {
         }
     }
 }
+

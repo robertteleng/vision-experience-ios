@@ -122,14 +122,16 @@ struct CameraView: View {
             cameraViewModel.startSession()
         }
         // Stop camera session when view disappears.
-        .onDisappear { cameraViewModel.stopSession() }
+        .onDisappear { 
+            cameraViewModel.stopSession() 
+        }
     }
 }
 
-#Preview {
-    CameraView(isCardboardMode: .constant(false))
-        .environmentObject(MainViewModel())
-        .environmentObject(AppRouter())
-        .environmentObject(DeviceOrientationObserver.shared)
-}
-
+//#Preview {
+//    CameraView(isCardboardMode: .constant(false))
+//        .environmentObject(MainViewModel())
+//        .environmentObject(AppRouter())
+//        .environmentObject(DeviceOrientationObserver.shared)
+//}
+//
