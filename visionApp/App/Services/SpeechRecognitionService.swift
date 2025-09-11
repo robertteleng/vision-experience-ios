@@ -7,7 +7,7 @@
 
 import Foundation
 import Speech
-import AVFoundation // ✅ AÑADIDO: Necesario para AVAudioSession y AVAudioEngine
+import AVFoundation
 import Combine
 
 class SpeechRecognitionService: NSObject, ObservableObject {
@@ -15,10 +15,7 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     @Published var isListening: Bool = false
     @Published var error: String?
 
-    // Callback opcional al procesar un comando válido
     var onCommand: ((String) -> Void)?
-
-    // Permite escucha continua (reinicia cuando termina un resultado final)
     var continuousListening: Bool = true
 
     private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
@@ -26,9 +23,11 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
 
-    // Timer para evitar procesar comandos muy seguidos
-    private var commandTimer: Timer?
-    private var lastProcessedCommand: String = ""
+    // ✅ ESTRATEGIA MEJORADA: Reset solo cuando sea necesario
+    private var commandProcessedTimer: Timer?
+    private var lastProcessedText: String = ""
+    private let maxAcceptableLength: Int = 100 // Más generoso
+    private let resetDelayAfterCommand: TimeInterval = 3.0 // Reset solo después de procesar comando
 
     override init() {
         super.init()
@@ -43,7 +42,6 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         speechRecognizer.delegate = self
     }
 
-    // Solicita permisos de voz y micrófono
     func requestAuthorization(completion: @escaping (Bool) -> Void) {
         let group = DispatchGroup()
         var speechOK = false
@@ -75,7 +73,6 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         }
     }
 
-    // Alterna entre iniciar y detener
     func toggleRecognition() {
         isListening ? stopRecognition() : startRecognition()
     }
@@ -83,13 +80,11 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     func startRecognition() {
         guard !isListening else { return }
 
-        // Verificar disponibilidad del reconocedor
         guard speechRecognizer?.isAvailable == true else {
             error = "Speech recognition not available"
             return
         }
 
-        // Asegurar permisos antes de empezar
         requestAuthorization { [weak self] granted in
             guard let self = self else { return }
             guard granted else { return }
@@ -122,29 +117,27 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         recognitionRequest?.endAudio()
         recognitionRequest = nil
 
-        commandTimer?.invalidate()
-        commandTimer = nil
+        commandProcessedTimer?.invalidate()
+        commandProcessedTimer = nil
 
         isListening = false
+        lastCommand = ""
+        lastProcessedText = ""
         print("🛑 Speech recognition stopped")
     }
 
     private func configureAudioSession() throws {
         let audioSession = AVAudioSession.sharedInstance()
-        // .playAndRecord ayuda si combinamos con reproducción; duckOthers reduce el volumen de otros audios
         try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP])
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
     private func startRecording() throws {
-        // Limpiar sesión anterior
         recognitionTask?.cancel()
         recognitionTask = nil
 
-        // Configurar sesión de audio
         try configureAudioSession()
 
-        // Preparar request y engine
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else {
             throw NSError(domain: "SpeechRecognition", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to create recognition request"])
@@ -153,12 +146,10 @@ class SpeechRecognitionService: NSObject, ObservableObject {
 
         let inputNode = audioEngine.inputNode
 
-        // Evitar taps duplicados
         if inputNode.numberOfInputs > 0 {
             inputNode.removeTap(onBus: 0)
         }
 
-        // Formato de audio válido
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         guard recordingFormat.sampleRate > 0 else {
             throw NSError(domain: "SpeechRecognition", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid audio format"])
@@ -171,96 +162,109 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         audioEngine.prepare()
         try audioEngine.start()
 
-        // Crear task
+        createRecognitionTask()
+    }
+
+    private func createRecognitionTask() {
+        guard let recognitionRequest = recognitionRequest else { return }
+        
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
+            
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Recognition error: \(error.localizedDescription)")
-                    self.error = "Recognition error: \(error.localizedDescription)"
-                    // Algunos errores son recuperables; si estamos en escucha continua, intentar reiniciar
-                    self.handleTaskCompletionOrError(restart: self.continuousListening)
+                    // ✅ MEJORADO: Solo log errores importantes, no spam
+                    let errorDescription = error.localizedDescription
+                    if !errorDescription.contains("No speech detected") {
+                        print("❌ Recognition error: \(errorDescription)")
+                        self.error = "Recognition error: \(errorDescription)"
+                    }
+                    
+                    // ✅ MEJORADO: Restart más inteligente
+                    if self.continuousListening && !errorDescription.contains("No speech detected") {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            if self.isListening {
+                                self.restartTaskKeepingEngineRunning()
+                            }
+                        }
+                    }
                     return
                 }
 
                 if let result = result {
                     let command = result.bestTranscription.formattedString.lowercased()
                     self.lastCommand = command
-
-                    if result.isFinal || self.shouldProcessCommand(command) {
-                        print("🗣️ Processing command: \(command)")
-                        self.onCommand?(command)
-                        // Si no queremos escucha continua y el resultado es final, detener
-                        if result.isFinal && !self.continuousListening {
-                            self.stopRecognition()
+                    
+                    // ✅ ESTRATEGIA NUEVA: Solo reset si el texto es extremadamente largo
+                    if command.count > self.maxAcceptableLength {
+                        print("⚠️ Text too long (\(command.count) chars), resetting")
+                        self.scheduleSmartReset()
+                        return
+                    }
+                    
+                    // ✅ NUEVO: Procesar comando inmediatamente si es final o contiene comando válido
+                    let shouldProcess = result.isFinal || self.containsValidCommand(command)
+                    
+                    if shouldProcess {
+                        // Evitar procesar el mismo texto dos veces
+                        if command != self.lastProcessedText {
+                            print("🗣️ Processing command: \(command)")
+                            self.onCommand?(command)
+                            self.lastProcessedText = command
+                            
+                            // ✅ NUEVO: Reset inteligente solo después de procesar comando exitoso
+                            self.scheduleSmartReset()
                         }
                     }
 
-                    // Si terminó (final) y queremos continua, reiniciamos el task
+                    // Restart en resultado final solo si es necesario
                     if result.isFinal && self.continuousListening {
-                        self.restartTaskKeepingEngineRunning()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            if self.isListening {
+                                self.restartTaskKeepingEngineRunning()
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    // ✅ NUEVO: Reset inteligente que no interfiere con el recognition normal
+    private func scheduleSmartReset() {
+        commandProcessedTimer?.invalidate()
+        commandProcessedTimer = Timer.scheduledTimer(withTimeInterval: resetDelayAfterCommand, repeats: false) { [weak self] _ in
+            guard let self = self, self.isListening else { return }
+            print("🔄 Smart reset after command processing")
+            self.restartTaskKeepingEngineRunning()
+            self.lastProcessedText = ""
+        }
+    }
+
+    private func containsValidCommand(_ text: String) -> Bool {
+        let validCommands = [
+            "cataratas", "cataracts", "glaucoma", "macular", "túnel", "tunel", "tunnel",
+            "más", "menos", "activar", "desactivar", "volver", "back", "cardboard",
+            "realidad", "ayuda"
+        ]
+        
+        return validCommands.contains { text.contains($0) }
+    }
+
     private func restartTaskKeepingEngineRunning() {
-        // Mantener engine y tap, solo recrear request y task
+        guard isListening else { return }
+        
         recognitionTask?.cancel()
         recognitionTask = nil
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { return }
         recognitionRequest.shouldReportPartialResults = true
-        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            guard let self = self else { return }
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("❌ Recognition error (restart): \(error.localizedDescription)")
-                    self.error = "Recognition error: \(error.localizedDescription)"
-                    self.handleTaskCompletionOrError(restart: self.continuousListening)
-                    return
-                }
-                if let result = result {
-                    let command = result.bestTranscription.formattedString.lowercased()
-                    self.lastCommand = command
-                    if result.isFinal || self.shouldProcessCommand(command) {
-                        print("🗣️ Processing command: \(command)")
-                        self.onCommand?(command)
-                        if result.isFinal && !self.continuousListening {
-                            self.stopRecognition()
-                        }
-                    }
-                    if result.isFinal && self.continuousListening {
-                        self.restartTaskKeepingEngineRunning()
-                    }
-                }
-            }
-        }
-    }
-
-    private func handleTaskCompletionOrError(restart: Bool) {
-        if restart {
-            // Intentar reiniciar manteniendo el engine activo
-            restartTaskKeepingEngineRunning()
-        } else {
-            stopRecognition()
-        }
-    }
-
-    // Evita procesar comandos duplicados muy seguidos
-    private func shouldProcessCommand(_ command: String) -> Bool {
-        defer {
-            lastProcessedCommand = command
-            commandTimer?.invalidate()
-            commandTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in }
-        }
-        return command != lastProcessedCommand || commandTimer == nil
+        createRecognitionTask()
     }
 
     deinit {
         stopRecognition()
-        commandTimer?.invalidate()
+        commandProcessedTimer?.invalidate()
     }
 }
 
@@ -275,4 +279,3 @@ extension SpeechRecognitionService: SFSpeechRecognizerDelegate {
         }
     }
 }
-

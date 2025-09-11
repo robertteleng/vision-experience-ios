@@ -17,7 +17,8 @@ extension VerticalAlignment {
 }
 
 struct FloatingMenu: View {
-    @EnvironmentObject var globalViewModel: MainViewModel
+    @EnvironmentObject var mainViewModel: MainViewModel
+    @EnvironmentObject var speechViewModel: SpeechRecognitionViewModel
     @EnvironmentObject var router: AppRouter
     @Binding var expanded: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -31,6 +32,9 @@ struct FloatingMenu: View {
 
     // Estado local para abrir/cerrar el panel de filtros
     @State private var showFiltersPanel: Bool = false
+    
+    // ✅ AÑADIDO: Estado para mostrar panel de testing de voz
+    @State private var showVoiceTestPanel: Bool = false
 
     var body: some View {
         // Coloca todo en la esquina inferior izquierda
@@ -44,6 +48,24 @@ struct FloatingMenu: View {
             .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // ✅ AÑADIDO: Sheet para testing de voz
+        .sheet(isPresented: $showVoiceTestPanel) {
+            NavigationView {
+                VoiceCommandsTestView(
+                    mainViewModel: mainViewModel,
+                    speechViewModel: speechViewModel
+                )
+                .navigationTitle("Test de Voz")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Cerrar") {
+                            showVoiceTestPanel = false
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Columna izquierda + slider/panel alineado con el centro de la "X"
@@ -56,17 +78,34 @@ struct FloatingMenu: View {
                     Button(action: { router.currentRoute = .illnessList }) {
                         FloatingMenuIcon(systemName: "arrow.left.circle")
                     }
-                    // “list.bullet” ahora abre/cierra el panel de filtros
+                    // "list.bullet" ahora abre/cierra el panel de filtros
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             showFiltersPanel.toggle()
+                            if showFiltersPanel {
+                                showVoiceTestPanel = false // Cerrar voice test si está abierto
+                            }
                         }
                     }) {
                         FloatingMenuIcon(systemName: "list.bullet")
                     }
-                    Button(action: { globalViewModel.isCardboardMode.toggle() }) {
+                    Button(action: { mainViewModel.isCardboardMode.toggle() }) {
                         FloatingMenuIcon(systemName: "eyeglasses")
+                    }
+                    
+                    // ✅ AÑADIDO: Botón para testing de voz
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showVoiceTestPanel = true
+                        // Cerrar panel de filtros si está abierto
+                        if showFiltersPanel {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                showFiltersPanel = false
+                            }
+                        }
+                    }) {
+                        FloatingMenuIcon(systemName: "mic.circle")
                     }
                 }
 
@@ -94,13 +133,13 @@ struct FloatingMenu: View {
             // --- Panel de filtros dinámico por filtro seleccionado
             if expanded && showFiltersPanel {
                 CompactFiltersPanel(
-                    filterEnabled: $globalViewModel.filterEnabled,
-                    centralFocus: $globalViewModel.centralFocus,
-                    selectedFilterType: globalViewModel.selectedIllness?.filterType,
-                    cataracts: $globalViewModel.cataractsSettings,
-                    glaucoma: $globalViewModel.glaucomaSettings,
-                    macular: $globalViewModel.macularDegenerationSettings,
-                    tunnel: $globalViewModel.tunnelVisionSettings,
+                    filterEnabled: $mainViewModel.filterEnabled,
+                    centralFocus: $mainViewModel.centralFocus,
+                    selectedFilterType: mainViewModel.selectedIllness?.filterType,
+                    cataracts: $mainViewModel.cataractsSettings,
+                    glaucoma: $mainViewModel.glaucomaSettings,
+                    macular: $mainViewModel.macularDegenerationSettings,
+                    tunnel: $mainViewModel.tunnelVisionSettings,
                     width: sliderWidth,
                     sliderHeight: sliderHeight
                 )
@@ -109,7 +148,7 @@ struct FloatingMenu: View {
                 .transition(.move(edge: .leading).combined(with: .opacity))
             } else if expanded && !showFiltersPanel {
                 // Slider rápido de intensidad global
-                GlassSlider(value: $globalViewModel.centralFocus, width: sliderWidth)
+                GlassSlider(value: $mainViewModel.centralFocus, width: sliderWidth)
                     .frame(height: sliderHeight)
                     .alignmentGuide(.xCenter) { d in d[VerticalAlignment.center] }
                     .padding(.leading, Self.menuWidth + 14)
@@ -119,158 +158,12 @@ struct FloatingMenu: View {
     }
 }
 
-// MARK: - Panel de Filtros compacto y scrollable
-private struct CompactFiltersPanel: View {
-    @Binding var filterEnabled: Bool
-    @Binding var centralFocus: Double
 
-    let selectedFilterType: IllnessFilterType?
 
-    @Binding var cataracts: CataractsSettings
-    @Binding var glaucoma: GlaucomaSettings
-    @Binding var macular: MacularDegenerationSettings
-    @Binding var tunnel: TunnelVisionSettings
-
-    var width: CGFloat
-    var sliderHeight: CGFloat
-
-    var body: some View {
-        GeometryReader { geo in
-            // Altura máxima ~48% del alto disponible
-            let maxPanelHeight = max(220.0, geo.size.height * 0.48)
-
-            VStack(spacing: 0) {
-                header
-                    .padding(.horizontal, 10)
-                    .padding(.top, 10)
-                    .padding(.bottom, 6)
-
-                Divider().opacity(0.15)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        // Intensidad global
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Intensidad global")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                            GlassSlider(value: $centralFocus, width: width - 24)
-                                .frame(height: sliderHeight)
-                        }
-
-                        // Controles específicos por filtro
-                        switch selectedFilterType {
-                        case .cataracts:
-                            cataractsSection
-                        case .glaucoma:
-                            glaucomaSection
-                        case .macularDegeneration:
-                            macularSection
-                        case .tunnelVision:
-                            tunnelSection
-                        case .none:
-                            Text("Selecciona una enfermedad para ajustar sus parámetros.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 4)
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 10)
-                }
-                .scrollIndicators(.visible)
-            }
-            .frame(width: width)
-            .frame(maxHeight: maxPanelHeight, alignment: .top)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: Color.black.opacity(0.18), radius: 6, y: 3)
-        }
-        .frame(width: width, alignment: .leading)
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "slider.horizontal.3")
-                .foregroundStyle(.primary)
-            Text("Filtros")
-                .font(.headline)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Spacer()
-            Toggle(isOn: $filterEnabled) { Text("Activo").font(.subheadline) }
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                .labelsHidden()
-        }
-    }
-
-    // MARK: Secciones por filtro (compactas)
-
-    private var cataractsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Cataratas").font(.subheadline).bold()
-            sliderRow(title: "Desenfoque", value: $cataracts.blurRadius, range: 0...30, format: "%.0f px")
-            sliderRow(title: "Contraste -", value: $cataracts.contrastReduction, range: 0...0.6, format: "%.2f")
-            sliderRow(title: "Saturación -", value: $cataracts.saturationReduction, range: 0...0.5, format: "%.2f")
-            sliderRow(title: "Azul - (tinte)", value: $cataracts.blueReduction, range: 0...0.4, format: "%.2f")
-        }
-        .padding(.top, 6)
-    }
-
-    private var glaucomaSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Glaucoma").font(.subheadline).bold()
-            sliderRow(title: "Intensidad viñeta", value: $glaucoma.vignetteIntensity, range: 0...2, format: "%.2f")
-            sliderRow(title: "Radio viñeta (factor)", value: $glaucoma.vignetteRadiusFactor, range: 0.5...2, format: "%.2f")
-            sliderRow(title: "Radio efecto (minSide)", value: $glaucoma.effectRadiusFactor, range: 0.2...2, format: "%.2f")
-        }
-        .padding(.top, 6)
-    }
-
-    private var macularSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Degeneración macular").font(.subheadline).bold()
-            sliderRow(title: "Radio interno", value: $macular.innerRadius, range: 0...120, format: "%.0f px")
-            sliderRow(title: "Radio externo (factor)", value: $macular.outerRadiusFactor, range: 0...1.0, format: "%.2f")
-            sliderRow(title: "Desenfoque", value: $macular.blurRadius, range: 0...10, format: "%.1f px")
-            sliderRow(title: "Oscurecimiento", value: $macular.darkAlpha, range: 0...1, format: "%.2f")
-            sliderRow(title: "Distorsión (ángulo)", value: $macular.twirlAngle, range: 0...Double.pi, format: "%.2f rad")
-        }
-        .padding(.top, 6)
-    }
-
-    private var tunnelSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Visión túnel").font(.subheadline).bold()
-            sliderRow(title: "Radio mínimo (%)", value: $tunnel.minRadiusPercent, range: 0.02...0.15, format: "%.3f")
-            sliderRow(title: "Radio máximo (factor)", value: $tunnel.maxRadiusFactor, range: 0.4...0.8, format: "%.2f")
-            sliderRow(title: "Desenfoque periférico", value: $tunnel.blurRadius, range: 0...20, format: "%.0f px")
-            sliderRow(title: "Feather base", value: $tunnel.featherFactorBase, range: 0.05...0.25, format: "%.3f")
-        }
-        .padding(.top, 6)
-    }
-
-    // Helper UI
-    private func sliderRow(title: String, value: Binding<Double>, range: ClosedRange<Double>, format: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                Spacer()
-                Text(String(format: format, value.wrappedValue))
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-                    .monospacedDigit()
-            }
-            Slider(value: value, in: range)
-                .tint(.blue.opacity(0.85))
-        }
-    }
-}
-
-#Preview {
-    FloatingMenu(expanded: .constant(true))
-        .padding()
-        .background(Color.gray.opacity(0.2))
-        .environmentObject(MainViewModel())
-        .environmentObject(AppRouter())
-}
+//#Preview {
+//    FloatingMenu(expanded: .constant(true))
+//        .padding()
+//        .background(Color.gray.opacity(0.2))
+//        .environmentObject(MainViewModel())
+//        .environmentObject(AppRouter())
+//}
