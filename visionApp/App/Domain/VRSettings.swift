@@ -1,4 +1,3 @@
-//
 //  VRSettings.swift
 //  visionApp
 //
@@ -15,9 +14,9 @@ struct VRSettings: Equatable, Codable {
     public var distortionZoomFactor: Double
     
     public init(
-        interpupillaryDistancePixels: Double = 32.0, // ~63mm en mundo real
-        barrelDistortionFactor: Double = 0.2,
-        distortionZoomFactor: Double = 1.1
+        interpupillaryDistancePixels: Double = 128.0, // ~63mm en mundo real
+        barrelDistortionFactor: Double = 0.0,
+        distortionZoomFactor: Double = 1.0
     ) {
         self.interpupillaryDistancePixels = interpupillaryDistancePixels
         self.barrelDistortionFactor = barrelDistortionFactor

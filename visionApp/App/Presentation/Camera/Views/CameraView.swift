@@ -28,6 +28,7 @@ struct CameraView: View {
     @Binding var isCardboardMode: Bool
     /// Handles navigation between screens.
     @EnvironmentObject var router: AppRouter
+    @State private var showVRSettings = false
 
     var body: some View {
         ZStack {
@@ -44,7 +45,8 @@ struct CameraView: View {
                             centralFocus: globalViewModel.centralFocus,
                             filterEnabled: globalViewModel.filterEnabled,
                             illnessSettings: globalViewModel.currentIllnessSettings,
-                            deviceOrientation: orientationObserver.orientation
+                            deviceOrientation: orientationObserver.orientation,
+                            vrSettings: globalViewModel.vrSettings
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
 
@@ -68,7 +70,8 @@ struct CameraView: View {
                             illness: globalViewModel.selectedIllness,
                             centralFocus: globalViewModel.centralFocus,
                             filterEnabled: globalViewModel.filterEnabled,
-                            illnessSettings: globalViewModel.currentIllnessSettings
+                            illnessSettings: globalViewModel.currentIllnessSettings,
+                            vrSettings: globalViewModel.vrSettings
                         )
                         .ignoresSafeArea() // solo la imagen ignora safe area
 
@@ -117,6 +120,88 @@ struct CameraView: View {
                 .background(Color.black.ignoresSafeArea())
             }
         }
+        .overlay(alignment: .topTrailing) {
+            Button(action: { showVRSettings = true }) {
+                Image(systemName: "gauge")
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(Color.black.opacity(0.4))
+                    .clipShape(Capsule())
+            }
+            .padding()
+        }
+        .sheet(isPresented: $showVRSettings) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Distancia interpupilar (px)")) {
+                        let binding = Binding<Double>(
+                            get: { globalViewModel.vrSettings.interpupillaryDistancePixels },
+                            set: { newValue in
+                                var s = globalViewModel.vrSettings
+                                s.interpupillaryDistancePixels = newValue
+                                globalViewModel.vrSettings = s
+                            }
+                        )
+                        Slider(value: binding, in: 0...300, step: 1) {
+                            Text("IPD")
+                        }
+                        HStack {
+                            Text("Actual: ")
+                            Spacer()
+                            Text("\(Int(globalViewModel.vrSettings.interpupillaryDistancePixels)) px")
+                                .monospacedDigit()
+                        }
+                    }
+                    Section(header: Text("Distorsión de lente (barrel)"), footer: Text("0.0 = sin distorsión; negativo = barrel; positivo = pincushion")) {
+                        let binding = Binding<Double>(
+                            get: { globalViewModel.vrSettings.barrelDistortionFactor },
+                            set: { newValue in
+                                var s = globalViewModel.vrSettings
+                                s.barrelDistortionFactor = newValue
+                                globalViewModel.vrSettings = s
+                            }
+                        )
+                        Slider(value: binding, in: -1.0...1.0, step: 0.01) {
+                            Text("Factor")
+                        }
+                        HStack {
+                            Text("Actual:")
+                            Spacer()
+                            Text(String(format: "%.2f", globalViewModel.vrSettings.barrelDistortionFactor))
+                                .monospacedDigit()
+                        }
+                    }
+                    Section(header: Text("Zoom de compensación"), footer: Text("1.0 = sin zoom; >1 recorta bordes tras distorsión")) {
+                        let binding = Binding<Double>(
+                            get: { globalViewModel.vrSettings.distortionZoomFactor },
+                            set: { newValue in
+                                var s = globalViewModel.vrSettings
+                                s.distortionZoomFactor = newValue
+                                globalViewModel.vrSettings = s
+                            }
+                        )
+                        Slider(value: binding, in: 0.9...1.3, step: 0.005) {
+                            Text("Zoom")
+                        }
+                        HStack {
+                            Text("Actual:")
+                            Spacer()
+                            Text(String(format: "%.3f", globalViewModel.vrSettings.distortionZoomFactor))
+                                .monospacedDigit()
+                        }
+                    }
+                }
+                .navigationTitle("Ajustes VR")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cerrar") { showVRSettings = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Reset") { globalViewModel.vrSettings = .defaults }
+                    }
+                }
+            }
+        }
         // Start camera session when view appears.
         .onAppear {
             cameraViewModel.startSession()
@@ -135,3 +220,4 @@ struct CameraView: View {
 //        .environmentObject(DeviceOrientationObserver.shared)
 //}
 //
+

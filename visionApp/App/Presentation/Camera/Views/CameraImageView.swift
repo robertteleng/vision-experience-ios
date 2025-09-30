@@ -29,17 +29,20 @@ struct CameraImageView: View {
     let filterEnabled: Bool
     /// Illness-specific settings wrapper
     let illnessSettings: IllnessSettings?
+    /// VR settings for stereoscopic rendering
+    let vrSettings: VRSettings
 
     var body: some View {
         GeometryReader { geometry in
             Group {
                 if let image = image {
-                    // Calcular offset VR según el panel
+                    // Calcular offset VR según el panel usando IPD en píxeles
+                    let halfIPD = CGFloat(vrSettings.interpupillaryDistancePixels / 2.0)
                     let vrOffset: CGPoint = {
                         switch panel {
                         case .full: return .zero
-                        case .left: return CGPoint(x: -16.0, y: 0)
-                        case .right: return CGPoint(x: 16.0, y: 0)
+                        case .left: return CGPoint(x: -halfIPD, y: 0)
+                        case .right: return CGPoint(x: halfIPD, y: 0)
                         }
                     }()
                     
@@ -51,7 +54,8 @@ struct CameraImageView: View {
                         centralFocus: centralFocus,
                         to: image,
                         panelSize: geometry.size,
-                        vrOffset: vrOffset
+                        vrOffset: vrOffset,
+                        vrSettings: vrSettings
                     )
                     
                     Image(decorative: processed, scale: 1.0, orientation: .up)
@@ -74,6 +78,8 @@ struct CameraImageView: View {
 //        illness: Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
 //        centralFocus: 0.5,
 //        filterEnabled: true,
-//        illnessSettings: .cataracts(.defaults)
+//        illnessSettings: .cataracts(.defaults),
+//        vrSettings: .defaults
 //    )
 //}
+

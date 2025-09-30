@@ -14,6 +14,7 @@ class MainViewModel: ObservableObject {
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
+    @Published var vrSettings: VRSettings = .defaults
     @Published var currentRoute: AppRoute = .splash
     
     // MARK: - Illness-specific settings
@@ -150,3 +151,4 @@ class MainViewModel: ObservableObject {
         cancellables.forEach { $0.cancel() }
     }
 }
+

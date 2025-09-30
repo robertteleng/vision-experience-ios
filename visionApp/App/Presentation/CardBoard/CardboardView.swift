@@ -9,6 +9,7 @@ struct CardboardView: View {
     let filterEnabled: Bool
     let illnessSettings: IllnessSettings?
     @State var deviceOrientation: UIDeviceOrientation
+    let vrSettings: VRSettings
     
     var body: some View {
         GeometryReader { geometry in
@@ -21,7 +22,8 @@ struct CardboardView: View {
                         illness: illness,
                         centralFocus: centralFocus,
                         filterEnabled: filterEnabled,
-                        illnessSettings: illnessSettings
+                        illnessSettings: illnessSettings,
+                        vrSettings: vrSettings
                     )
                     
                     if cameraService.currentFrame == nil {
@@ -40,7 +42,8 @@ struct CardboardView: View {
                         illness: illness,
                         centralFocus: centralFocus,
                         filterEnabled: filterEnabled,
-                        illnessSettings: illnessSettings
+                        illnessSettings: illnessSettings,
+                        vrSettings: vrSettings
                     )
                     
                     if cameraService.currentFrame == nil {
@@ -66,7 +69,8 @@ struct CardboardView: View {
 //        centralFocus: 0.5,
 //        filterEnabled: true,
 //        illnessSettings: .cataracts(.defaults),
-//        deviceOrientation: .portrait
+//        deviceOrientation: .portrait,
+//        vrSettings: .defaults
 //    )
 //}
 
