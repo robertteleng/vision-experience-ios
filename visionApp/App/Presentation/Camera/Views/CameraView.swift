@@ -120,6 +120,7 @@ struct CameraView: View {
                 .background(Color.black.ignoresSafeArea())
             }
         }
+        .ignoresSafeArea()
         .overlay(alignment: .topTrailing) {
             Button(action: { showVRSettings = true }) {
                 Image(systemName: "gauge")

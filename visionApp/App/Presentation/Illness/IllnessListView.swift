@@ -13,19 +13,22 @@ struct IllnessListView: View {
     ]
 
     var body: some View {
-        VStack {
-            Spacer()
-            VStack(alignment: .leading, spacing: 28) {
-                ForEach(illnesses) { illness in
-                    FloatingGlassButton(title: illness.name, iconName: "eye") {
-                        globalViewModel.selectedIllness = illness
-                        router.currentRoute = .camera
+        ZStack {
+            VStack {
+                Spacer()
+                VStack(alignment: .leading, spacing: 28) {
+                    ForEach(illnesses) { illness in
+                        FloatingGlassButton(title: illness.name, iconName: "eye") {
+                            globalViewModel.selectedIllness = illness
+                            router.currentRoute = .camera
+                        }
                     }
                 }
+                .padding(.horizontal)
+                Spacer()
             }
-            .padding(.horizontal)
-            Spacer()
         }
+        .ignoresSafeArea()
     }
 }
 

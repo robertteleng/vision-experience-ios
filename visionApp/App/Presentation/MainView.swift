@@ -7,7 +7,7 @@ struct MainView: View {
     @EnvironmentObject var orientationObserver: DeviceOrientationObserver
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Renderiza la pantalla según el estado de navegación
                 switch router.currentRoute {
