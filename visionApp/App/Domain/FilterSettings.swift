@@ -109,3 +109,20 @@ public struct TunnelVisionSettings: Equatable, Codable {
 
     public static var `defaults`: TunnelVisionSettings { TunnelVisionSettings() }
 }
+
+public struct HemianopsiaSettings: Equatable, Codable {
+    // Lado afectado: true = izquierda, false = derecha
+    public var leftSideAffected: Bool
+    // Suavizado del borde (0 = borde duro, 1 = transición suave)
+    public var featherFactor: Double
+
+    public init(
+        leftSideAffected: Bool = true,
+        featherFactor: Double = 0.15
+    ) {
+        self.leftSideAffected = leftSideAffected
+        self.featherFactor = featherFactor
+    }
+
+    public static var `defaults`: HemianopsiaSettings { HemianopsiaSettings() }
+}

@@ -250,6 +250,7 @@ class SpeechRecognitionViewModel: ObservableObject {
             case .glaucoma: return "Glaucoma"
             case .macularDegeneration: return "Degeneración macular"
             case .tunnelVision: return "Visión túnel"
+            case .hemianopsia: return "Hemianopsia"
             }
         case .increaseIntensity: return "Más intenso"
         case .decreaseIntensity: return "Menos intenso"

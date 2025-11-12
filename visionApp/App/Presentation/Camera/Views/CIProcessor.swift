@@ -206,9 +206,34 @@ final class CIProcessor {
             composite.backgroundImage = darkenedPeripheral
             composite.maskImage = mask
             outputCI = composite.outputImage ?? zoomed
+
+        case .hemianopsia:
+            let s: HemianopsiaSettings = {
+                if case .hemianopsia(let v) = settings { return v }
+                return .defaults
+            }()
+            let minSide = min(zoomed.extent.width, zoomed.extent.height)
+            let feather = CGFloat(s.featherFactor) * minSide
+            let maskWidth = zoomed.extent.width * 0.5
+            let maskRect: CGRect = s.leftSideAffected ?
+                CGRect(x: 0, y: 0, width: maskWidth + feather, height: zoomed.extent.height) :
+                CGRect(x: maskWidth - feather, y: 0, width: maskWidth + feather, height: zoomed.extent.height)
+            // Crear máscara con gradiente para suavizar el borde
+            let gradient = CIFilter.linearGradient()
+            gradient.point0 = s.leftSideAffected ? CGPoint(x: maskWidth, y: 0) : CGPoint(x: maskWidth, y: 0)
+            gradient.point1 = s.leftSideAffected ? CGPoint(x: maskWidth + feather, y: 0) : CGPoint(x: maskWidth - feather, y: 0)
+            gradient.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            gradient.color1 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+            let gradImage = gradient.outputImage?.cropped(to: maskRect) ?? zoomed
+            // Crear fondo negro para la mitad afectada
+            let black = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: 1)).cropped(to: maskRect)
+            // Componer la imagen final
+            let composite = CIFilter.sourceOverCompositing()
+            composite.inputImage = black.composited(over: gradImage)
+            composite.backgroundImage = zoomed
+            outputCI = composite.outputImage?.cropped(to: zoomed.extent) ?? zoomed
         }
 
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image
     }
 }
-

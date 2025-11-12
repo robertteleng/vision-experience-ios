@@ -12,4 +12,5 @@ enum IllnessSettings: Equatable, Codable {
     case glaucoma(GlaucomaSettings)
     case macular(MacularDegenerationSettings)
     case tunnel(TunnelVisionSettings)
+    case hemianopsia(HemianopsiaSettings)
 }

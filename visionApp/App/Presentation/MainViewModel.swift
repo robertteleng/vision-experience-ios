@@ -22,6 +22,7 @@ class MainViewModel: ObservableObject {
     @Published var glaucomaSettings: GlaucomaSettings = .defaults
     @Published var macularDegenerationSettings: MacularDegenerationSettings = .defaults
     @Published var tunnelVisionSettings: TunnelVisionSettings = .defaults
+    @Published var hemianopsiaSettings: HemianopsiaSettings = .defaults
     
     // MARK: - Computed Properties
     var currentIllnessSettings: IllnessSettings? {
@@ -35,6 +36,8 @@ class MainViewModel: ObservableObject {
             return .macular(macularDegenerationSettings)
         case .tunnelVision:
             return .tunnel(tunnelVisionSettings)
+        case .hemianopsia:
+            return .hemianopsia(hemianopsiaSettings)
         }
     }
     
@@ -42,6 +45,15 @@ class MainViewModel: ObservableObject {
     var navigateToIllnessList: (() -> Void)?
     
     private var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - Lista de enfermedades
+    let illnesses: [Illness] = [
+        Illness(name: "Visión borrosa", description: "Simula visión borrosa por cataratas.", filterType: .cataracts),
+        Illness(name: "Reducción periférica", description: "Simula reducción del campo visual periférico por glaucoma.", filterType: .glaucoma),
+        Illness(name: "Escotoma central", description: "Simula pérdida de visión central por degeneración macular.", filterType: .macularDegeneration),
+        Illness(name: "Hemianopsia", description: "Simula pérdida de visión en la mitad del campo visual.", filterType: .hemianopsia),
+        Illness(name: "Visión en túnel", description: "Simula reducción concéntrica del campo visual.", filterType: .tunnelVision)
+    ]
     
     // MARK: - Initialization
     init() {
@@ -85,6 +97,8 @@ class MainViewModel: ObservableObject {
             illness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
         case .tunnelVision:
             illness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
+        case .hemianopsia:
+            illness = Illness(name: "Hemianopsia", description: "Simula pérdida de visión en la mitad del campo visual.", filterType: .hemianopsia)
         }
         selectedIllness = illness
     }
@@ -141,6 +155,7 @@ class MainViewModel: ObservableObject {
         glaucomaSettings = .defaults
         macularDegenerationSettings = .defaults
         tunnelVisionSettings = .defaults
+        hemianopsiaSettings = .defaults
         centralFocus = 0.5
         filterEnabled = true
         print("🔄 All settings reset to defaults")
@@ -151,4 +166,3 @@ class MainViewModel: ObservableObject {
         cancellables.forEach { $0.cancel() }
     }
 }
-

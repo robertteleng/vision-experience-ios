@@ -18,6 +18,7 @@ struct CompactFiltersPanel: View {
     @Binding var glaucoma: GlaucomaSettings
     @Binding var macular: MacularDegenerationSettings
     @Binding var tunnel: TunnelVisionSettings
+    @Binding var hemianopsia: HemianopsiaSettings
 
     var width: CGFloat
     var sliderHeight: CGFloat
@@ -56,6 +57,8 @@ struct CompactFiltersPanel: View {
                             macularSection
                         case .tunnelVision:
                             tunnelSection
+                        case .hemianopsia:
+                            hemianopsiaSection
                         case .none:
                             Text("Selecciona una enfermedad para ajustar sus parámetros.")
                                 .font(.footnote)
@@ -133,6 +136,19 @@ struct CompactFiltersPanel: View {
             sliderRow(title: "Radio máximo (factor)", value: $tunnel.maxRadiusFactor, range: 0.4...0.8, format: "%.2f")
             sliderRow(title: "Desenfoque periférico", value: $tunnel.blurRadius, range: 0...20, format: "%.0f px")
             sliderRow(title: "Feather base", value: $tunnel.featherFactorBase, range: 0.05...0.25, format: "%.3f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var hemianopsiaSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Hemianopsia").font(.subheadline).bold()
+            Toggle(isOn: $hemianopsia.leftSideAffected) {
+                Text(hemianopsia.leftSideAffected ? "Lado izquierdo afectado" : "Lado derecho afectado")
+                    .font(.subheadline)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+            sliderRow(title: "Suavizado del borde (feather)", value: $hemianopsia.featherFactor, range: 0.0...0.3, format: "%.2f")
         }
         .padding(.top, 6)
     }
