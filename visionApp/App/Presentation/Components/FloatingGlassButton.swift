@@ -1,18 +1,26 @@
 //
-//  IllnessButton.swift
+//  FloatingGlassButton.swift
 //  visionApp
 //
 //  Created by Roberto Rojo Sahuquillo on 5/8/25.
 //
+//  This file defines the FloatingGlassButton, a reusable SwiftUI component styled
+//  to resemble an Apple Glass button. It adapts its appearance for light/dark mode
+//  and is used for illness selection and other floating actions in the app.
 
 import SwiftUI
 
-// MARK: - Botón Apple Glass flotante adaptado para cada enfermedad
-
+/// FloatingGlassButton is a stylized button for floating actions.
+/// - Displays an icon and title, adapts to color scheme.
+/// - Used for illness selection and other prominent actions.
 struct FloatingGlassButton: View {
+    /// The button's title text.
     var title: String
+    /// The SF Symbol icon name to display.
     var iconName: String
+    /// The action to perform when tapped.
     var action: () -> Void
+    /// The current color scheme (light/dark).
     @Environment(\.colorScheme) var colorScheme
 
     // Intento seguro de crear la imagen SF; si falla, se muestra un símbolo por defecto
