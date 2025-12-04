@@ -53,15 +53,6 @@ extension CameraService {
                 // Mantener la orientación actual si es desconocida/faceUp/faceDown
                 break
             }
-<<<<<<< HEAD
-            // Always set videoOrientation to portrait for compatibility
-            connection.videoOrientation = .portrait
-            if let previewLayer = connection.videoPreviewLayer {
-                // Apply affine transform to rotate the preview layer
-                previewLayer.setAffineTransform(CGAffineTransform(rotationAngle: angle))
-            }
-=======
->>>>>>> illness-filters-temp
         }
     }
 }

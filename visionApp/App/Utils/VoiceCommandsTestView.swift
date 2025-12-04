@@ -197,6 +197,10 @@ struct VoiceCommandsTestView: View {
             return "cataratas, glaucoma, macular, túnel, ayuda"
         case .camera:
             return "cataratas, glaucoma, macular, túnel, más, menos, activar, desactivar, volver, realidad, ayuda"
+        case .home:
+            return "Navegación general"
+        case .immersiveVideo:
+            return "Comandos de video inmersivo"
         }
     }
     
@@ -208,8 +212,10 @@ struct VoiceCommandsTestView: View {
             return "Lista de enfermedades"
         case .camera:
             return "Cámara"
-        @unknown default:
-            return String(describing: route)
+        case .home:
+            return "Home"
+        case .immersiveVideo:
+            return "Video Inmersivo"
         }
     }
 

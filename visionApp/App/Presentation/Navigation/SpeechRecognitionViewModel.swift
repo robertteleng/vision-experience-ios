@@ -251,6 +251,11 @@ class SpeechRecognitionViewModel: ObservableObject {
             case .macularDegeneration: return "Degeneración macular"
             case .tunnelVision: return "Visión túnel"
             case .hemianopsia: return "Hemianopsia"
+            case .blurryVision: return "Visión borrosa"
+            case .centralScotoma: return "Escotoma central"
+            case .diabeticRetinopathy: return "Retinopatía diabética"
+            case .deuteranopia: return "Deuteranopia"
+            case .astigmatism: return "Astigmatismo"
             }
         case .increaseIntensity: return "Más intenso"
         case .decreaseIntensity: return "Menos intenso"
@@ -271,6 +276,10 @@ class SpeechRecognitionViewModel: ObservableObject {
             return "Di: cataratas, glaucoma, macular, túnel, más, menos, activar, desactivar, volver"
         case .splash:
             return "Espera a que cargue"
+        case .home:
+            return "Navegando"
+        case .immersiveVideo:
+            return "Reproduciendo video inmersivo"
         }
     }
     

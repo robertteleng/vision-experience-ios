@@ -19,6 +19,8 @@ struct CompactFiltersPanel: View {
     @Binding var macular: MacularDegenerationSettings
     @Binding var tunnel: TunnelVisionSettings
     @Binding var hemianopsia: HemianopsiaSettings
+    @Binding var blurryVision: BlurryVisionSettings
+    @Binding var centralScotoma: CentralScotomaSettings
 
     var width: CGFloat
     var sliderHeight: CGFloat
@@ -59,6 +61,16 @@ struct CompactFiltersPanel: View {
                             tunnelSection
                         case .hemianopsia:
                             hemianopsiaSection
+                        case .blurryVision:
+                            blurryVisionSection
+                        case .centralScotoma:
+                            centralScotomaSection
+                        case .diabeticRetinopathy:
+                            notImplementedSection(name: "Retinopatía diabética")
+                        case .deuteranopia:
+                            notImplementedSection(name: "Deuteranopia")
+                        case .astigmatism:
+                            notImplementedSection(name: "Astigmatismo")
                         case .none:
                             Text("Selecciona una enfermedad para ajustar sus parámetros.")
                                 .font(.footnote)
@@ -100,9 +112,8 @@ struct CompactFiltersPanel: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Cataratas").font(.subheadline).bold()
             sliderRow(title: "Desenfoque", value: $cataracts.blurRadius, range: 0...30, format: "%.0f px")
-            sliderRow(title: "Contraste -", value: $cataracts.contrastReduction, range: 0...0.6, format: "%.2f")
-            sliderRow(title: "Saturación -", value: $cataracts.saturationReduction, range: 0...0.5, format: "%.2f")
-            sliderRow(title: "Azul - (tinte)", value: $cataracts.blueReduction, range: 0...0.4, format: "%.2f")
+            sliderRow(title: "Nubosidad", value: $cataracts.cloudiness, range: 0...1, format: "%.2f")
+            sliderRow(title: "Brillo", value: $cataracts.brightness, range: 0...1.5, format: "%.2f")
         }
         .padding(.top, 6)
     }
@@ -110,9 +121,9 @@ struct CompactFiltersPanel: View {
     private var glaucomaSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Glaucoma").font(.subheadline).bold()
-            sliderRow(title: "Intensidad viñeta", value: $glaucoma.vignetteIntensity, range: 0...2, format: "%.2f")
-            sliderRow(title: "Radio viñeta (factor)", value: $glaucoma.vignetteRadiusFactor, range: 0.5...2, format: "%.2f")
-            sliderRow(title: "Radio efecto (minSide)", value: $glaucoma.effectRadiusFactor, range: 0.2...2, format: "%.2f")
+            sliderRow(title: "Radio túnel", value: $glaucoma.tunnelRadius, range: 0...1, format: "%.2f")
+            sliderRow(title: "Caída de viñeta", value: $glaucoma.vignetteFalloff, range: 0...1, format: "%.2f")
+            sliderRow(title: "Contraste", value: $glaucoma.contrast, range: 0.5...2, format: "%.2f")
         }
         .padding(.top, 6)
     }
@@ -120,11 +131,9 @@ struct CompactFiltersPanel: View {
     private var macularSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Degeneración macular").font(.subheadline).bold()
-            sliderRow(title: "Radio interno", value: $macular.innerRadius, range: 0...120, format: "%.0f px")
-            sliderRow(title: "Radio externo (factor)", value: $macular.outerRadiusFactor, range: 0...1.0, format: "%.2f")
-            sliderRow(title: "Desenfoque", value: $macular.blurRadius, range: 0...10, format: "%.1f px")
-            sliderRow(title: "Oscurecimiento", value: $macular.darkAlpha, range: 0...1, format: "%.2f")
-            sliderRow(title: "Distorsión (ángulo)", value: $macular.twirlAngle, range: 0...Double.pi, format: "%.2f rad")
+            sliderRow(title: "Desenfoque central", value: $macular.centralBlurRadius, range: 0...30, format: "%.0f px")
+            sliderRow(title: "Distorsión", value: $macular.distortionAmount, range: 0...1, format: "%.2f")
+            sliderRow(title: "Oscuridad central", value: $macular.centralDarkness, range: 0...1, format: "%.2f")
         }
         .padding(.top, 6)
     }
@@ -132,10 +141,9 @@ struct CompactFiltersPanel: View {
     private var tunnelSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Visión túnel").font(.subheadline).bold()
-            sliderRow(title: "Radio mínimo (%)", value: $tunnel.minRadiusPercent, range: 0.02...0.15, format: "%.3f")
-            sliderRow(title: "Radio máximo (factor)", value: $tunnel.maxRadiusFactor, range: 0.4...0.8, format: "%.2f")
-            sliderRow(title: "Desenfoque periférico", value: $tunnel.blurRadius, range: 0...20, format: "%.0f px")
-            sliderRow(title: "Feather base", value: $tunnel.featherFactorBase, range: 0.05...0.25, format: "%.3f")
+            sliderRow(title: "Radio túnel", value: $tunnel.tunnelRadius, range: 0...0.5, format: "%.3f")
+            sliderRow(title: "Suavizado del borde", value: $tunnel.edgeSoftness, range: 0...1, format: "%.2f")
+            sliderRow(title: "Nivel de oscuridad", value: $tunnel.darknessLevel, range: 0...1, format: "%.2f")
         }
         .padding(.top, 6)
     }
@@ -143,12 +151,45 @@ struct CompactFiltersPanel: View {
     private var hemianopsiaSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Hemianopsia").font(.subheadline).bold()
-            Toggle(isOn: $hemianopsia.leftSideAffected) {
-                Text(hemianopsia.leftSideAffected ? "Lado izquierdo afectado" : "Lado derecho afectado")
-                    .font(.subheadline)
+            
+            Picker("Lado afectado", selection: $hemianopsia.side) {
+                ForEach(HemianopsiaSide.allCases, id: \.self) { side in
+                    Text(side.rawValue.capitalized).tag(side)
+                }
             }
-            .toggleStyle(SwitchToggleStyle(tint: .blue))
-            sliderRow(title: "Suavizado del borde (feather)", value: $hemianopsia.featherFactor, range: 0.0...0.3, format: "%.2f")
+            .pickerStyle(.segmented)
+            
+            sliderRow(title: "Suavizado del borde", value: $hemianopsia.transitionSoftness, range: 0.0...1.0, format: "%.2f")
+            sliderRow(title: "Oscuridad", value: $hemianopsia.darkness, range: 0.0...1.0, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var blurryVisionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Visión borrosa").font(.subheadline).bold()
+            sliderRow(title: "Desenfoque", value: $blurryVision.blurAmount, range: 0...30, format: "%.0f px")
+            sliderRow(title: "Claridad", value: $blurryVision.clarity, range: 0...1, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var centralScotomaSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Escotoma central").font(.subheadline).bold()
+            sliderRow(title: "Radio del escotoma", value: $centralScotoma.scotomaRadius, range: 0...0.5, format: "%.2f")
+            sliderRow(title: "Oscuridad", value: $centralScotoma.darkness, range: 0...1, format: "%.2f")
+            sliderRow(title: "Desenfoque del borde", value: $centralScotoma.edgeBlur, range: 0...30, format: "%.0f px")
+        }
+        .padding(.top, 6)
+    }
+
+    private func notImplementedSection(name: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(name).font(.subheadline).bold()
+            Text("Este filtro aún no tiene controles personalizados.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
         .padding(.top, 6)
     }

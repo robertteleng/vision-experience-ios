@@ -232,6 +232,29 @@ final class CIProcessor {
             composite.inputImage = black.composited(over: gradImage)
             composite.backgroundImage = zoomed
             outputCI = composite.outputImage?.cropped(to: zoomed.extent) ?? zoomed
+            
+        case .blurryVision:
+            // TODO: Implement blurry vision effect
+            let blur = CIFilter.gaussianBlur()
+            blur.inputImage = zoomed
+            blur.radius = Float(10.0 * clampedFocus)
+            outputCI = blur.outputImage?.clamped(to: zoomed.extent) ?? zoomed
+            
+        case .centralScotoma:
+            // TODO: Implement central scotoma effect
+            outputCI = zoomed
+            
+        case .diabeticRetinopathy:
+            // TODO: Implement diabetic retinopathy effect
+            outputCI = zoomed
+            
+        case .deuteranopia:
+            // TODO: Implement deuteranopia (color blindness) effect
+            outputCI = zoomed
+            
+        case .astigmatism:
+            // TODO: Implement astigmatism effect
+            outputCI = zoomed
         }
 
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image

@@ -13,7 +13,7 @@ enum AppRoute {
     case splash
     case illnessList
     case camera
-    case immersiveVideo // New route for 360º video with spatial audio
+    case immersiveVideo // Route for 360º video with spatial audio
 }
 
 /// AppRouter manages navigation state for the app.

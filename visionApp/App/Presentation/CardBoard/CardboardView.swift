@@ -8,7 +8,6 @@
 
 import SwiftUI
 import AVFoundation
-//import App.Presentation.Components.Panel // Import shared Panel enum
 
 /// CardboardView renders left and right camera panels for a stereoscopic effect.
 /// - Uses CameraImageView for each panel, applying illness and focus filters.
@@ -21,37 +20,27 @@ struct CardboardView: View {
     let illness: Illness?
     /// The central focus value for processing.
     let centralFocus: Double
-<<<<<<< HEAD
-    /// The current device orientation.
-=======
     let filterEnabled: Bool
     let illnessSettings: IllnessSettings?
->>>>>>> illness-filters-temp
+    /// The current device orientation.
     @State var deviceOrientation: UIDeviceOrientation
     let vrSettings: VRSettings
     
     var body: some View {
         GeometryReader { geometry in
-            HStack(spacing: 0) { // Cambiar spacing a 0
+            HStack(spacing: 0) {
                 // Panel izquierdo
                 ZStack {
                     CameraImageView(
                         image: cameraService.currentFrame,
                         panel: .left,
                         illness: illness,
-<<<<<<< HEAD
-                        centralFocus: centralFocus
-                    )
-                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                    .ignoresSafeArea()
-=======
                         centralFocus: centralFocus,
                         filterEnabled: filterEnabled,
                         illnessSettings: illnessSettings,
                         vrSettings: vrSettings
                     )
                     
->>>>>>> illness-filters-temp
                     if cameraService.currentFrame == nil {
                         Text("No frame LEFT")
                             .foregroundColor(.white)
@@ -66,19 +55,12 @@ struct CardboardView: View {
                         image: cameraService.currentFrame,
                         panel: .right,
                         illness: illness,
-<<<<<<< HEAD
-                        centralFocus: centralFocus
-                    )
-                    .frame(width: geometry.size.width / 2, height: geometry.size.height)
-                    .ignoresSafeArea()
-=======
                         centralFocus: centralFocus,
                         filterEnabled: filterEnabled,
                         illnessSettings: illnessSettings,
                         vrSettings: vrSettings
                     )
                     
->>>>>>> illness-filters-temp
                     if cameraService.currentFrame == nil {
                         Text("No frame RIGHT")
                             .foregroundColor(.white)
@@ -88,8 +70,8 @@ struct CardboardView: View {
                 .frame(width: geometry.size.width / 2, height: geometry.size.height)
             }
         }
-        .ignoresSafeArea(.all) // Ignorar TODAS las safe areas
-        .statusBar(hidden: true) // Ocultar la barra de estado si es necesario
+        .ignoresSafeArea(.all)
+        .statusBar(hidden: true)
     }
 }
 

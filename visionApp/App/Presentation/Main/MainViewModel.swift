@@ -14,6 +14,21 @@ class MainViewModel: NSObject, ObservableObject {
     @Published var filterEnabled: Bool = true
     @Published var centralFocus: Double = 0.5
     @Published var isCardboardMode: Bool = false
+    @Published var currentRoute: AppRoute = .splash
+    
+    // List of available illnesses for IllnessListView
+    let illnesses: [Illness] = [
+        Illness(name: "Cataracts", description: "Simula visión con cataratas.", filterType: .cataracts),
+        Illness(name: "Glaucoma", description: "Simula visión con glaucoma.", filterType: .glaucoma),
+        Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration),
+        Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision),
+        Illness(name: "Hemianopsia", description: "Simula hemianopsia.", filterType: .hemianopsia),
+        Illness(name: "Blurry Vision", description: "Simula visión borrosa.", filterType: .blurryVision),
+        Illness(name: "Central Scotoma", description: "Simula escotoma central.", filterType: .centralScotoma),
+        Illness(name: "Diabetic Retinopathy", description: "Simula retinopatía diabética.", filterType: .diabeticRetinopathy),
+        Illness(name: "Deuteranopia", description: "Simula deuteranopia (daltonismo).", filterType: .deuteranopia),
+        Illness(name: "Astigmatism", description: "Simula astigmatismo.", filterType: .astigmatism)
+    ]
 
     // Control global de reconocimiento
     @Published var isSpeechEnabled: Bool = true {
@@ -36,6 +51,9 @@ class MainViewModel: NSObject, ObservableObject {
     @Published var blurryVisionSettings: BlurryVisionSettings = .defaults
     @Published var centralScotomaSettings: CentralScotomaSettings = .defaults
     @Published var hemianopsiaSettings: HemianopsiaSettings = .defaults
+    
+    // VR/Cardboard settings
+    @Published var vrSettings: VRSettings = .defaults
 
     // NUEVO: Síntomas combinables (post-proceso global)
     @Published var combinedSymptomsEnabled: Bool = false
@@ -59,6 +77,12 @@ class MainViewModel: NSObject, ObservableObject {
             return .centralScotoma(centralScotomaSettings)
         case .hemianopsia:
             return .hemianopsia(hemianopsiaSettings)
+        case .diabeticRetinopathy:
+            return .diabeticRetinopathy(cataractsSettings)
+        case .deuteranopia:
+            return .deuteranopia(cataractsSettings)
+        case .astigmatism:
+            return .astigmatism(cataractsSettings)
         }
     }
 
@@ -70,13 +94,13 @@ class MainViewModel: NSObject, ObservableObject {
     init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
         self.speechService = speechService
         super.init()
-        // Idioma por defecto: español, con fallback inglés
-        self.speechService.setPreferredLocales(primary: "es-ES", secondary: "en-US")
         setupSpeechRecognitionBinding()
         // Arrancar si está habilitado
         if isSpeechEnabled {
             self.speechService.requestAuthorization { [weak self] ok in
-                if ok { self?.speechService.startRecognition() }
+                if ok { 
+                    self?.speechService.startRecognition()
+                }
             }
         }
     }
@@ -103,20 +127,6 @@ class MainViewModel: NSObject, ObservableObject {
                 } else if lowercased.contains("macular") || lowercased.contains("degeneración macular") || lowercased.contains("degeneracion macular") {
                     self.selectedIllness = Illness(name: "Macular Degeneration", description: "Simula degeneración macular.", filterType: .macularDegeneration)
                     self.speak("Filtro de degeneración macular activado")
-<<<<<<< HEAD:visionApp/App/Presentation/Main/MainViewModel.swift
-                // Diabetic Retinopathy
-                } else if lowercased.contains("retinopathy") || lowercased.contains("retinopatía") || lowercased.contains("diabetic") || lowercased.contains("diabética") {
-                    self.selectedIllness = Illness(name: "Diabetic Retinopathy", description: "Simula retinopatía diabética.", filterType: .diabeticRetinopathy)
-                    self.speak("Filtro de retinopatía diabética activado")
-                // Color Blindness (Deuteranopia)
-                } else if lowercased.contains("deuteranopia") || lowercased.contains("deuteranopia") || lowercased.contains("color blindness") || lowercased.contains("daltonismo") {
-                    self.selectedIllness = Illness(name: "Color Blindness (Deuteranopia)", description: "Simula deuteranopia.", filterType: .deuteranopia)
-                    self.speak("Filtro de deuteranopia activado")
-                // Astigmatism
-                } else if lowercased.contains("astigmatism") || lowercased.contains("astigmatismo") {
-                    self.selectedIllness = Illness(name: "Astigmatism", description: "Simula astigmatismo.", filterType: .astigmatism)
-                    self.speak("Filtro de astigmatismo activado")
-=======
                 } else if lowercased.contains("tunnel vision") || lowercased.contains("visión de túnel") || lowercased.contains("vision de tunel") || lowercased.contains("tunel") {
                     self.selectedIllness = Illness(name: "Tunnel Vision", description: "Simula visión en túnel.", filterType: .tunnelVision)
                     self.speak("Filtro de visión en túnel activado")
@@ -129,7 +139,18 @@ class MainViewModel: NSObject, ObservableObject {
                 } else if lowercased.contains("hemianopsia") || lowercased.contains("hemianopia") {
                     self.selectedIllness = Illness(name: "Hemianopsia", description: "Simula hemianopsia.", filterType: .hemianopsia)
                     self.speak("Filtro de hemianopsia activado")
->>>>>>> illness-filters-temp:visionApp/App/Presentation/Navigation/MainViewModel.swift
+                // Diabetic Retinopathy
+                } else if lowercased.contains("retinopathy") || lowercased.contains("retinopatía") || lowercased.contains("diabetic") || lowercased.contains("diabética") {
+                    self.selectedIllness = Illness(name: "Diabetic Retinopathy", description: "Simula retinopatía diabética.", filterType: .diabeticRetinopathy)
+                    self.speak("Filtro de retinopatía diabética activado")
+                // Color Blindness (Deuteranopia)
+                } else if lowercased.contains("deuteranopia") || lowercased.contains("deuteranopia") || lowercased.contains("color blindness") || lowercased.contains("daltonismo") {
+                    self.selectedIllness = Illness(name: "Color Blindness (Deuteranopia)", description: "Simula deuteranopia.", filterType: .deuteranopia)
+                    self.speak("Filtro de deuteranopia activado")
+                // Astigmatism
+                } else if lowercased.contains("astigmatism") || lowercased.contains("astigmatismo") {
+                    self.selectedIllness = Illness(name: "Astigmatism", description: "Simula astigmatismo.", filterType: .astigmatism)
+                    self.speak("Filtro de astigmatismo activado")
                 }
             }
             .store(in: &cancellables)
@@ -137,40 +158,106 @@ class MainViewModel: NSObject, ObservableObject {
 
     // Coordina TTS con el reconocimiento para evitar auto-transcripción
     func speak(_ text: String) {
-        speechService.pauseRecognition()
-
-        let utterance = AVSpeechUtterance(string: text)
-        if let lang = Locale.preferredLanguages.first {
-            utterance.voice = AVSpeechSynthesisVoice(language: lang)
-        } else {
-            utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
+        // Pausar reconocimiento temporalmente
+        let wasListening = speechService.isListening
+        if wasListening {
+            speechService.stopRecognition()
         }
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            let utterance = AVSpeechUtterance(string: text)
+            if let lang = Locale.preferredLanguages.first {
+                utterance.voice = AVSpeechSynthesisVoice(language: lang)
+            } else {
+                utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
+            }
+            utterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
-        let synthesizer = AVSpeechSynthesizer()
-        synthesizer.delegate = self
-        synthesizer.speak(utterance)
+            let synthesizer = AVSpeechSynthesizer()
+            synthesizer.delegate = self
+            synthesizer.speak(utterance)
 
-        objc_setAssociatedObject(self, &AssociatedKeys.synthKey, synthesizer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedKeys.synthKey, synthesizer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedKeys.wasListeningKey, wasListening, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    // MARK: - Methods called by AppCoordinator
+    
+    func updateCurrentRoute(_ route: AppRoute) {
+        currentRoute = route
+    }
+    
+    func selectIllness(by filterType: IllnessFilterType) {
+        selectedIllness = Illness(name: filterType.displayName, description: "", filterType: filterType)
+        speak("Filtro de \(filterType.displayName) activado")
+    }
+    
+    func increaseIntensity() {
+        centralFocus = min(centralFocus + 0.1, 1.0)
+        speak("Intensidad aumentada")
+    }
+    
+    func decreaseIntensity() {
+        centralFocus = max(centralFocus - 0.1, 0.0)
+        speak("Intensidad disminuida")
+    }
+    
+    func enableFilter() {
+        filterEnabled = true
+        speak("Filtro activado")
+    }
+    
+    func disableFilter() {
+        filterEnabled = false
+        speak("Filtro desactivado")
+    }
+    
+    func enableVRMode() {
+        isCardboardMode = true
+        speak("Modo VR activado")
+    }
+    
+    func disableVRMode() {
+        isCardboardMode = false
+        speak("Modo VR desactivado")
+    }
+    
+    func navigateBack() {
+        navigateToIllnessList?()
+        speak("Volviendo atrás")
     }
 }
 
 private enum AssociatedKeys {
     static var synthKey: UInt8 = 0
+    static var wasListeningKey: UInt8 = 1
 }
 
 extension MainViewModel: AVSpeechSynthesizerDelegate {
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         objc_setAssociatedObject(self, &AssociatedKeys.synthKey, nil, .OBJC_ASSOCIATION_ASSIGN)
-        if isSpeechEnabled {
-            speechService.resumeRecognition()
+        
+        // Reanudar reconocimiento si estaba activo
+        if let wasListening = objc_getAssociatedObject(self, &AssociatedKeys.wasListeningKey) as? Bool, 
+           wasListening, 
+           isSpeechEnabled {
+            speechService.startRecognition()
         }
+        objc_setAssociatedObject(self, &AssociatedKeys.wasListeningKey, nil, .OBJC_ASSOCIATION_ASSIGN)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
         objc_setAssociatedObject(self, &AssociatedKeys.synthKey, nil, .OBJC_ASSOCIATION_ASSIGN)
-        if isSpeechEnabled {
-            speechService.resumeRecognition()
+        
+        // Reanudar reconocimiento si estaba activo
+        if let wasListening = objc_getAssociatedObject(self, &AssociatedKeys.wasListeningKey) as? Bool, 
+           wasListening, 
+           isSpeechEnabled {
+            speechService.startRecognition()
         }
+        objc_setAssociatedObject(self, &AssociatedKeys.wasListeningKey, nil, .OBJC_ASSOCIATION_ASSIGN)
     }
 }

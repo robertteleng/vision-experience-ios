@@ -2,127 +2,151 @@
 //  FilterSettings.swift
 //  visionApp
 //
-//  Created by Roberto Rojo Sahuquillo on 7/9/25.
+//  Settings structures for each illness filter type
 //
 
 import Foundation
 import CoreGraphics
 
-// MARK: - Filter-specific settings
-
-public struct CataractsSettings: Equatable, Codable {
-    // Gaussian blur radius (in pixels)
-    public var blurRadius: Double
-    // Contrast reduction (0 = no change, 1 = full contrast removal)
-    public var contrastReduction: Double
-    // Saturation reduction (0 = no change, 1 = full desaturation)
-    public var saturationReduction: Double
-    // Blue channel reduction to simulate yellowish tint (0..1)
-    public var blueReduction: Double
-
-    public init(
-        blurRadius: Double = 12.0,
-        contrastReduction: Double = 0.25,
-        saturationReduction: Double = 0.2,
-        blueReduction: Double = 0.15
-    ) {
-        self.blurRadius = blurRadius
-        self.contrastReduction = contrastReduction
-        self.saturationReduction = saturationReduction
-        self.blueReduction = blueReduction
-    }
-
-    public static var `defaults`: CataractsSettings { CataractsSettings() }
+// MARK: - Cataracts Settings
+struct CataractsSettings: Codable, Equatable {
+    var blurRadius: Double
+    var cloudiness: Double
+    var brightness: Double
+    var saturationReduction: Double
+    var contrastReduction: Double
+    var blueReduction: Double
+    
+    static let defaults = CataractsSettings(
+        blurRadius: 10.0,
+        cloudiness: 0.3,
+        brightness: 0.8,
+        saturationReduction: 0.3,
+        contrastReduction: 0.2,
+        blueReduction: 0.2
+    )
 }
 
-public struct GlaucomaSettings: Equatable, Codable {
-    // Base vignette intensity (CIFilter.vignette.intensity)
-    public var vignetteIntensity: Double
-    // Base vignette radius factor (CIFilter.vignette.radius)
-    public var vignetteRadiusFactor: Double
-    // Effect radius factor for centered vignette (relative to the shorter image side)
-    public var effectRadiusFactor: Double
-
-    public init(
-        vignetteIntensity: Double = 1.0,
-        vignetteRadiusFactor: Double = 1.0,
-        effectRadiusFactor: Double = 1.0
-    ) {
-        self.vignetteIntensity = vignetteIntensity
-        self.vignetteRadiusFactor = vignetteRadiusFactor
-        self.effectRadiusFactor = effectRadiusFactor
-    }
-
-    public static var `defaults`: GlaucomaSettings { GlaucomaSettings() }
+// MARK: - Glaucoma Settings
+struct GlaucomaSettings: Codable, Equatable {
+    var tunnelRadius: Double
+    var vignetteFalloff: Double
+    var contrast: Double
+    var vignetteIntensity: Double
+    var vignetteRadiusFactor: Double
+    var effectRadiusFactor: Double
+    
+    static let defaults = GlaucomaSettings(
+        tunnelRadius: 0.3,
+        vignetteFalloff: 0.8,
+        contrast: 1.2,
+        vignetteIntensity: 0.8,
+        vignetteRadiusFactor: 0.5,
+        effectRadiusFactor: 0.3
+    )
 }
 
-public struct MacularDegenerationSettings: Equatable, Codable {
-    // Inner radius of the affected central area (in pixels)
-    public var innerRadius: Double
-    // Outer radius factor relative to the shorter image side (0..1)
-    public var outerRadiusFactor: Double
-    // Applied blur radius (in pixels)
-    public var blurRadius: Double
-    // Darkness opacity (0..1)
-    public var darkAlpha: Double
-    // Distortion angle (in radians)
-    public var twirlAngle: Double
-
-    public init(
-        innerRadius: Double = 40.0,
-        outerRadiusFactor: Double = 0.35,
-        blurRadius: Double = 3.0,
-        darkAlpha: Double = 0.65,
-        twirlAngle: Double = .pi * 0.5
-    ) {
-        self.innerRadius = innerRadius
-        self.outerRadiusFactor = outerRadiusFactor
-        self.blurRadius = blurRadius
-        self.darkAlpha = darkAlpha
-        self.twirlAngle = twirlAngle
-    }
-
-    public static var `defaults`: MacularDegenerationSettings { MacularDegenerationSettings() }
+// MARK: - Macular Degeneration Settings
+struct MacularDegenerationSettings: Codable, Equatable {
+    var centralBlurRadius: Double
+    var distortionAmount: Double
+    var centralDarkness: Double
+    var blurRadius: Double
+    var darkAlpha: Double
+    var twirlAngle: Double
+    var innerRadius: Double
+    var outerRadiusFactor: Double
+    
+    static let defaults = MacularDegenerationSettings(
+        centralBlurRadius: 15.0,
+        distortionAmount: 0.4,
+        centralDarkness: 0.5,
+        blurRadius: 15.0,
+        darkAlpha: 0.5,
+        twirlAngle: 0.4,
+        innerRadius: 0.1,
+        outerRadiusFactor: 0.3
+    )
 }
 
-public struct TunnelVisionSettings: Equatable, Codable {
-    // Minimum tunnel radius as a percentage of the shorter image side (0..1)
-    public var minRadiusPercent: Double
-    // Maximum tunnel radius factor relative to the shorter image side
-    public var maxRadiusFactor: Double
-    // Peripheral blur radius (in pixels)
-    public var blurRadius: Double
-    // Base feather factor for edge smoothing
-    public var featherFactorBase: Double
-
-    public init(
-        minRadiusPercent: Double = 0.05,
-        maxRadiusFactor: Double = 0.62,
-        blurRadius: Double = 10.0,
-        featherFactorBase: Double = 0.12
-    ) {
-        self.minRadiusPercent = minRadiusPercent
-        self.maxRadiusFactor = maxRadiusFactor
-        self.blurRadius = blurRadius
-        self.featherFactorBase = featherFactorBase
-    }
-
-    public static var `defaults`: TunnelVisionSettings { TunnelVisionSettings() }
+// MARK: - Tunnel Vision Settings
+struct TunnelVisionSettings: Codable, Equatable {
+    var tunnelRadius: Double
+    var edgeSoftness: Double
+    var darknessLevel: Double
+    var blurRadius: Double
+    var maxRadiusFactor: Double
+    var featherFactorBase: Double
+    var minRadiusPercent: Double
+    
+    static let defaults = TunnelVisionSettings(
+        tunnelRadius: 0.25,
+        edgeSoftness: 0.5,
+        darknessLevel: 0.9,
+        blurRadius: 10.0,
+        maxRadiusFactor: 0.25,
+        featherFactorBase: 0.5,
+        minRadiusPercent: 0.1
+    )
 }
 
-public struct HemianopsiaSettings: Equatable, Codable {
-    // Lado afectado: true = izquierda, false = derecha
-    public var leftSideAffected: Bool
-    // Suavizado del borde (0 = borde duro, 1 = transición suave)
-    public var featherFactor: Double
+// MARK: - Blurry Vision Settings
+struct BlurryVisionSettings: Codable, Equatable {
+    var blurAmount: Double
+    var clarity: Double
+    
+    static let defaults = BlurryVisionSettings(
+        blurAmount: 8.0,
+        clarity: 0.7
+    )
+}
 
-    public init(
-        leftSideAffected: Bool = true,
-        featherFactor: Double = 0.15
-    ) {
-        self.leftSideAffected = leftSideAffected
-        self.featherFactor = featherFactor
-    }
+// MARK: - Central Scotoma Settings
+struct CentralScotomaSettings: Codable, Equatable {
+    var scotomaRadius: Double
+    var darkness: Double
+    var edgeBlur: Double
+    
+    static let defaults = CentralScotomaSettings(
+        scotomaRadius: 0.15,
+        darkness: 0.8,
+        edgeBlur: 20.0
+    )
+}
 
-    public static var `defaults`: HemianopsiaSettings { HemianopsiaSettings() }
+// MARK: - Hemianopsia Settings
+struct HemianopsiaSettings: Codable, Equatable {
+    var side: HemianopsiaSide
+    var transitionSoftness: Double
+    var darkness: Double
+    var leftSideAffected: Bool
+    var featherFactor: Double
+    
+    static let defaults = HemianopsiaSettings(
+        side: .left,
+        transitionSoftness: 0.3,
+        darkness: 0.95,
+        leftSideAffected: true,
+        featherFactor: 0.3
+    )
+}
+
+enum HemianopsiaSide: String, Codable, CaseIterable {
+    case left
+    case right
+    case top
+    case bottom
+}
+
+// MARK: - Combined Symptoms Settings
+struct CombinedSymptomsSettings: Codable, Equatable {
+    var photophobia: Double // Light sensitivity
+    var floaters: Double // Eye floaters intensity
+    var halos: Double // Light halos around objects
+    
+    static let defaults = CombinedSymptomsSettings(
+        photophobia: 0.0,
+        floaters: 0.0,
+        halos: 0.0
+    )
 }

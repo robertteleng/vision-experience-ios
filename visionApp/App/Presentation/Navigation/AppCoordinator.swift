@@ -57,6 +57,8 @@ class AppCoordinator: ObservableObject, SpeechRecognitionDelegate {
                     case .splash: return .splash
                     case .illnessList: return .illnessList
                     case .camera: return .camera
+                    case .home: return .home
+                    case .immersiveVideo: return .immersiveVideo
                     }
                 }()
                 self?.mainViewModel.updateCurrentRoute(appRoute)
@@ -102,6 +104,10 @@ class AppCoordinator: ObservableObject, SpeechRecognitionDelegate {
                 return true // Siempre activo para selección
             case .camera:
                 return true // Siempre activo en cámara (VR o normal)
+            case .home:
+                return false // No speech en home
+            case .immersiveVideo:
+                return false // No speech en video inmersivo
             }
         }()
         

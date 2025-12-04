@@ -41,7 +41,7 @@ struct ImmersiveVideoView: View {
                     Text(filter.displayName).tag(filter)
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
+            .pickerStyle(.segmented)
             .padding(.horizontal)
             // Central focus slider
             HStack {
@@ -284,17 +284,20 @@ struct SceneKitVideoSphereView: UIViewRepresentable {
             autoreleasepool {
                 if let pixelBuffer = output.copyPixelBuffer(forItemTime: currentTime, itemTimeForDisplay: &displayTime) {
                     let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-                    let uiImage = UIImage(ciImage: ciImage)
+                    let context = CIContext()
+                    guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
                     let illness = Illness(name: filterType.displayName, description: "", filterType: filterType)
                     let width = CVPixelBufferGetWidth(pixelBuffer)
                     let height = CVPixelBufferGetHeight(pixelBuffer)
-                    let filteredImage = CIProcessor.shared.apply(
+                    let filteredCGImage = CIProcessor.shared.apply(
                         illness: illness,
+                        settings: nil,
+                        filterEnabled: true,
                         centralFocus: centralFocus,
-                        to: uiImage,
+                        to: cgImage,
                         panelSize: CGSize(width: width, height: height)
                     )
-                    node.geometry?.firstMaterial?.diffuse.contents = filteredImage
+                    node.geometry?.firstMaterial?.diffuse.contents = filteredCGImage
                 }
             }
         }

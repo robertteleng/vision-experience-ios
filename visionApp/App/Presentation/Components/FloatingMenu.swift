@@ -141,6 +141,8 @@ struct FloatingMenu: View {
                     macular: $mainViewModel.macularDegenerationSettings,
                     tunnel: $mainViewModel.tunnelVisionSettings,
                     hemianopsia: $mainViewModel.hemianopsiaSettings,
+                    blurryVision: $mainViewModel.blurryVisionSettings,
+                    centralScotoma: $mainViewModel.centralScotomaSettings,
                     width: sliderWidth,
                     sliderHeight: sliderHeight
                 )

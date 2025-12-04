@@ -169,13 +169,7 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-<<<<<<< HEAD
         if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
-            let image = UIImage(cgImage: cgImage)
-=======
-        let context = CIContext()
-        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
->>>>>>> illness-filters-temp
             DispatchQueue.main.async {
                 self.currentFrame = cgImage // Publish CGImage directly
             }
