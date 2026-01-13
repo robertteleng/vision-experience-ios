@@ -1,0 +1,95 @@
+@startuml Componentes Principales
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+title Componentes Principales - VisionApp
+
+package "Main Module" #4CAF50 {
+    component [HomeView] as Home
+    component [MainViewModel] as MainVM
+}
+
+package "Camera Module" #2196F3 {
+    component [CameraView] as CameraView
+    component [CameraViewModel] as CameraVM
+    component [CameraService] as CameraService
+    component [CameraImageView] as ImageView
+}
+
+package "CardBoard Module" #9C27B0 {
+    component [CardboardView] as Cardboard
+    component [LeftPanel] as Left
+    component [RightPanel] as Right
+}
+
+package "Image Processing" #FF9800 {
+    component [CIProcessor] as Processor
+}
+
+package "UI Components" #00BCD4 {
+    component [FloatingMenu] as Menu
+    component [CompactFiltersPanel] as Filters
+    component [GlassSlider] as Slider
+}
+
+package "Voice Control" #F44336 {
+    component [SpeechRecognition\nService] as Speech
+    component [Voice Commands\nProcessor] as Commands
+}
+
+package "Domain" #E8F5E9 {
+    component [Illness] as Illness
+    component [IllnessSettings] as Settings
+    component [FilterSettings] as FilterSettings
+}
+
+Home --> CameraView : navigate
+Home --> Cardboard : navigate
+
+CameraView --> CameraVM : uses
+CameraVM --> CameraService : manages
+CameraService --> ImageView : provides frame
+
+CameraView --> Menu : contains
+Menu --> Filters : contains
+Menu --> Slider : contains
+
+Cardboard --> Left : renders
+Cardboard --> Right : renders
+Left --> ImageView : uses
+Right --> ImageView : uses
+
+ImageView --> Processor : applies filters
+Processor --> Settings : uses
+
+MainVM --> Speech : integrates
+Speech --> Commands : processes
+Commands --> MainVM : updates state
+
+MainVM --> Illness : manages
+MainVM --> Settings : configures
+Settings --> FilterSettings : contains
+
+CameraView ..> MainVM : observes state
+Menu ..> MainVM : updates state
+Processor ..> Illness : reads config
+
+note right of Processor
+  Aplica efectos en tiempo real:
+  • Cataratas (blur + opacity)
+  • Glaucoma (tunnel + dark spots)
+  • Degeneración Macular (central blur)
+  • Visión Túnel (peripheral darkness)
+end note
+
+note right of Speech
+  Comandos soportados:
+  • "Activar cataratas"
+  • "Activar glaucoma"
+  • "Desactivar filtro"
+  • "Aumentar intensidad"
+end note
+
+@enduml

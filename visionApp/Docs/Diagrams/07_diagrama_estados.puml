@@ -1,0 +1,89 @@
+@startuml Estados de la Aplicación
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Diagrama de Estados - VisionApp
+
+[*] --> Splash : App inicia
+
+Splash : Animación del logo
+Splash : Carga recursos
+
+Splash --> Home : Animación completa
+
+state Home {
+  [*] --> MenuPrincipal
+  MenuPrincipal : Muestra opciones
+  MenuPrincipal : Logo UMH
+}
+
+Home --> CameraNormal : Selecciona\nCámara Normal
+Home --> CameraCardboard : Selecciona\nModo VR
+Home --> ListaEnfermedades : Selecciona\nVer Lista
+
+state CameraNormal {
+  [*] --> SinFiltro
+  
+  SinFiltro : Cámara activa
+  SinFiltro : Sin procesamiento
+  
+  SinFiltro --> FiltroActivo : Usuario activa filtro
+  FiltroActivo --> SinFiltro : Usuario desactiva filtro
+  
+  FiltroActivo : CIProcessor aplicando efectos
+  FiltroActivo : Menú flotante visible
+  
+  state FiltroActivo {
+    [*] --> Cataratas
+    Cataratas --> Glaucoma : Cambia enfermedad
+    Glaucoma --> MacularDegeneration : Cambia enfermedad
+    MacularDegeneration --> TunnelVision : Cambia enfermedad
+    TunnelVision --> Cataratas : Cambia enfermedad
+    
+    Cataratas : Efecto: blur + opacity
+    Glaucoma : Efecto: tunnel + spots
+    MacularDegeneration : Efecto: central blur
+    TunnelVision : Efecto: vignette
+  }
+}
+
+state CameraCardboard {
+  [*] --> VRSinFiltro
+  
+  VRSinFiltro : Vista estereoscópica
+  VRSinFiltro : Panel izquierdo + derecho
+  
+  VRSinFiltro --> VRFiltroActivo : Activa filtro
+  VRFiltroActivo --> VRSinFiltro : Desactiva filtro
+  
+  VRFiltroActivo : Filtro aplicado a ambos paneles
+  VRFiltroActivo : Experiencia inmersiva
+}
+
+state ListaEnfermedades {
+  [*] --> MostrandoLista
+  MostrandoLista : Lista de enfermedades
+  MostrandoLista : Descripciones
+  MostrandoLista : Iconos
+}
+
+CameraNormal --> Home : Botón Home
+CameraCardboard --> Home : Botón Home
+ListaEnfermedades --> Home : Botón Volver
+
+CameraNormal --> CameraCardboard : Activa modo VR
+CameraCardboard --> CameraNormal : Desactiva modo VR
+
+note right of FiltroActivo
+  Control por voz disponible
+  en cualquier momento para
+  cambiar filtros o ajustes
+end note
+
+note left of CameraCardboard
+  Requiere Google Cardboard
+  o visor VR compatible
+end note
+
+@enduml

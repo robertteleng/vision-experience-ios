@@ -48,7 +48,9 @@ struct CameraView: View {
                             deviceOrientation: orientationObserver.orientation,
                             vrSettings: globalViewModel.vrSettings
                         )
-                        .ignoresSafeArea() // solo la imagen ignora safe area
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false) // La imagen no captura toques
+                        .zIndex(0)
 
                         // Floating menu overlay (respeta safe area)
                         VStack {
@@ -58,7 +60,7 @@ struct CameraView: View {
                                 .padding(.bottom, 16)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                        .zIndex(2)
+                        .zIndex(100)
                     }
                 } else {
                     // Standard camera view (single panel).
@@ -73,7 +75,9 @@ struct CameraView: View {
                             illnessSettings: globalViewModel.currentIllnessSettings,
                             vrSettings: globalViewModel.vrSettings
                         )
-                        .ignoresSafeArea() // solo la imagen ignora safe area
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false) // La imagen no captura toques
+                        .zIndex(0)
 
                         // Floating menu overlay (respeta safe area)
                         VStack {
@@ -83,7 +87,7 @@ struct CameraView: View {
                                 .padding(.bottom, 16)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                        .zIndex(2)
+                        .zIndex(100)
                     }
                 }
             } else {

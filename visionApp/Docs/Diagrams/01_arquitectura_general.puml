@@ -1,0 +1,68 @@
+@startuml Arquitectura General VisionApp
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title Arquitectura General - VisionApp
+
+package "Presentation Layer" #E1F5FF {
+    [Views\nUI Components] as Views
+    [ViewModels\nBusiness Logic] as ViewModels
+    [Components\nReusable UI] as Components
+}
+
+package "Domain Layer" #FFF4E1 {
+    [Models\nData Structures] as Models
+    [Enums\nFilter Types] as Enums
+}
+
+package "Services Layer" #FCE4EC {
+    [CameraService\nAVFoundation] as Camera
+    [SpeechRecognition\nSpeech Framework] as Speech
+    [SpatialAudio\nAudio Service] as Audio
+}
+
+package "Image Processing" #F3E5F5 {
+    [CIProcessor\nCore Image Filters] as Processor
+}
+
+package "Utils" #E8F5E9 {
+    [DeviceObserver\nOrientation] as Observer
+    [HeadOrientation\nSpatial Tracking] as Head
+}
+
+Views --> ViewModels
+ViewModels --> Models
+ViewModels --> Enums
+ViewModels --> Camera
+ViewModels --> Speech
+ViewModels --> Audio
+Views --> Processor
+Views --> Components
+Processor --> Models
+Processor --> Enums
+Observer --> Views
+Head --> Audio
+
+note right of Views
+  - CameraView
+  - CardboardView
+  - FloatingMenu
+  - CameraImageView
+end note
+
+note right of ViewModels
+  - MainViewModel
+  - CameraViewModel
+end note
+
+note right of Processor
+  Aplica filtros de:
+  - Cataratas
+  - Glaucoma
+  - Degeneración Macular
+  - Visión Túnel
+end note
+
+@enduml

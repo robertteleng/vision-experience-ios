@@ -1,0 +1,114 @@
+@startuml Despliegue y Módulos
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Diagrama de Despliegue - Estructura de Módulos
+
+node "iOS Device" {
+  
+  package "visionApp.app" {
+    
+    frame "Presentation Layer" #E1F5FF {
+      component [Views] as Views
+      component [ViewModels] as ViewModels
+      component [Components] as Components
+      
+      note right of Views
+        • CameraView
+        • CardboardView
+        • CameraImageView
+        • FloatingMenu
+        • HomeView
+      end note
+    }
+    
+    frame "Domain Layer" #FFF4E1 {
+      component [Models] as Models
+      component [Enums] as Enums
+      
+      note right of Models
+        • Illness
+        • FilterSettings
+        • IllnessSettings
+      end note
+      
+      note right of Enums
+        • IllnessFilterType
+        • Panel
+        • CameraError
+      end note
+    }
+    
+    frame "Services Layer" #FCE4EC {
+      component [CameraService] as CamService
+      component [SpeechRecognition] as SpeechService
+      component [SpatialAudio] as AudioService
+    }
+    
+    frame "Processing Layer" #F3E5F5 {
+      component [CIProcessor] as Processor
+    }
+    
+    frame "Utils" #E8F5E9 {
+      component [DeviceObserver] as Observer
+      component [HeadOrientation] as HeadTrack
+    }
+    
+    Views --> ViewModels
+    Views --> Components
+    ViewModels --> Models
+    ViewModels --> Enums
+    Views --> Processor
+    
+    ViewModels --> CamService
+    ViewModels --> SpeechService
+    ViewModels --> AudioService
+    
+    Processor --> Models
+    Processor --> Enums
+    
+    Observer --> Views
+    HeadTrack --> AudioService
+  }
+  
+  frame "iOS Frameworks" #FFEBEE {
+    component [AVFoundation] as AVF
+    component [Speech Framework] as SF
+    component [Core Image] as CI
+    component [SwiftUI] as SUI
+    component [Combine] as Combine
+    component [Core Motion] as CM
+  }
+  
+  CamService --> AVF : uses
+  SpeechService --> SF : uses
+  Processor --> CI : uses
+  Views --> SUI : uses
+  ViewModels --> Combine : uses
+  HeadTrack --> CM : uses
+}
+
+cloud "Device Hardware" {
+  component [Camera] as HWCamera
+  component [Microphone] as HWMic
+  component [Speaker] as HWSpeaker
+  component [Sensors] as HWSensors
+}
+
+AVF --> HWCamera
+SF --> HWMic
+AudioService --> HWSpeaker
+CM --> HWSensors
+
+note bottom of "visionApp.app"
+  Arquitectura en capas con
+  separación clara de responsabilidades
+  
+  • Presentation: UI y presentación
+  • Domain: Lógica de negocio
+  • Services: Integración con sistema
+  • Processing: Procesamiento intensivo
+end note
+
+@enduml

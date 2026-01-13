@@ -18,6 +18,6 @@ enum AppRoute {
 
 /// AppRouter manages navigation state for the app.
 class AppRouter: ObservableObject {
-    @Published var currentRoute: AppRoute = .home
+    @Published var currentRoute: AppRoute = .splash
     // Métodos para navegar, push/pop, etc. si lo necesitas
 }

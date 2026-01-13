@@ -1,0 +1,54 @@
+@startuml Flujo de Usuario
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Flujo de Usuario - VisionApp
+
+start
+
+:Usuario inicia la App;
+:Splash Screen\n(Animación Logo);
+
+:Pantalla Principal\n(HomeView);
+
+if (Selecciona Modo) then (Cámara Normal)
+  :Vista Cámara\nModo Normal;
+  
+elseif (Modo VR) then (Cardboard)
+  :Vista Cardboard\nVR Estereoscópico;
+  
+else (Lista)
+  :Lista de Enfermedades;
+  stop
+endif
+
+:Menú Flotante\nAparece;
+
+if (Usuario interactúa) then (Voz)
+  :Comando de Voz\n"Activar cataratas";
+  :Reconocimiento\nde Voz;
+  
+elseif (Manual)
+  :Selecciona Filtro\nen Menú;
+  
+endif
+
+:Aplica Filtro\nde Enfermedad;
+
+repeat
+  :CIProcessor\nProcesa Frame;
+  :Muestra en Pantalla\nEfecto en Tiempo Real;
+  
+  if (Ajustar?) then (Sí)
+    :Modifica Intensidad,\nContraste, Blur;
+  endif
+  
+repeat while (¿Continuar con filtro?) is (Sí)
+->No;
+
+:Volver al Inicio;
+
+stop
+
+@enduml

@@ -1,0 +1,71 @@
+@startuml Secuencia Comandos de Voz
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Secuencia: Control por Voz
+
+actor Usuario
+participant "SpeechRecognition\nService" as Speech
+participant "MainViewModel" as VM
+participant "CameraView" as View
+participant "AVSpeech\nSynthesizer" as TTS
+
+Usuario -> Speech: Dice comando\n"Activar cataratas"
+activate Speech
+
+Speech -> Speech: Reconoce audio\n(SFSpeechRecognizer)
+Speech -> Speech: Procesa texto
+
+Speech -> VM: lastCommand = "cataracts"
+deactivate Speech
+
+activate VM
+VM -> VM: processVoiceCommand()
+
+alt Comando: Activar filtro
+    VM -> VM: selectedIllness = Cataracts
+    VM -> VM: filterEnabled = true
+    
+else Comando: Desactivar filtro
+    VM -> VM: filterEnabled = false
+    
+else Comando: Aumentar/Disminuir
+    VM -> VM: Ajusta intensity += 0.1
+    
+else Comando: Cambiar enfermedad
+    VM -> VM: selectedIllness = new Illness
+end
+
+VM -> View: Publica estado actualizado
+deactivate VM
+
+activate View
+View -> View: Actualiza UI
+View --> Usuario: Muestra cambios
+deactivate View
+
+activate VM
+VM -> TTS: speak("Cataratas activadas")
+activate TTS
+TTS --> Usuario: Respuesta por voz
+deactivate TTS
+deactivate VM
+
+note right of Speech
+  Comandos soportados:
+  • "Activar [enfermedad]"
+  • "Desactivar filtro"
+  • "Aumentar intensidad"
+  • "Disminuir intensidad"
+  • "Modo cardboard"
+  • "Modo normal"
+end note
+
+note right of TTS
+  Feedback auditivo para
+  confirmar acciones sin
+  necesidad de ver la pantalla
+end note
+
+@enduml

@@ -409,6 +409,7 @@
 				DEVELOPMENT_TEAM = B8VLRHF5DU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = README.md;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Need to use the camera to view objects";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Need to use microphone to listen user comands";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Need it to make user actions";
@@ -445,6 +446,7 @@
 				DEVELOPMENT_TEAM = B8VLRHF5DU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = README.md;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Need to use the camera to view objects";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Need to use microphone to listen user comands";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Need it to make user actions";
@@ -478,7 +480,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.robert.rjsh.visionAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -496,7 +498,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.robert.rjsh.visionAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

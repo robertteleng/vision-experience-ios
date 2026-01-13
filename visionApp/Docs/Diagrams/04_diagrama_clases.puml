@@ -1,0 +1,123 @@
+@startuml Clases Principales
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+title Diagrama de Clases - VisionApp (Simplificado)
+
+class MainViewModel {
+  + selectedIllness: Illness?
+  + filterEnabled: Bool
+  + centralFocus: Bool
+  + isCardboardMode: Bool
+  + cataractsSettings: CataractsSettings
+  + glaucomaSettings: GlaucomaSettings
+  + macularSettings: MacularDegenerationSettings
+  + tunnelSettings: TunnelVisionSettings
+  --
+  + toggleFilter()
+  + selectIllness(Illness)
+  + updateSettings(IllnessSettings)
+  + processVoiceCommand(String)
+}
+
+class CameraViewModel {
+  + currentFrame: CGImage?
+  + error: CameraError?
+  + isRunning: Bool
+  --
+  + startCamera()
+  + stopCamera()
+  + handleFrame(CGImage)
+}
+
+class CameraService {
+  + currentFrame: CGImage
+  + error: CameraError
+  - captureSession: AVCaptureSession
+  --
+  + setupCamera()
+  + startSession()
+  + stopSession()
+  - captureOutput(sampleBuffer)
+}
+
+class CIProcessor {
+  + shared: CIProcessor
+  --
+  + apply(image, settings, focus): CGImage?
+  - applyCataracts(image, settings): CIImage
+  - applyGlaucoma(image, settings): CIImage
+  - applyMacularDegeneration(image, settings): CIImage
+  - applyTunnelVision(image, settings): CIImage
+}
+
+class Illness {
+  + id: UUID
+  + name: String
+  + description: String
+  + filterType: IllnessFilterType
+  + icon: String
+  + color: Color
+}
+
+class IllnessSettings {
+  + intensity: Double
+  + contrast: Double
+  + blur: Double
+  + colorShift: Double
+  + brightness: Double
+  + saturation: Double
+  + vignetteIntensity: Double
+}
+
+class SpeechRecognitionService {
+  + lastCommand: String
+  + isListening: Bool
+  - recognizer: SFSpeechRecognizer
+  - audioEngine: AVAudioEngine
+  --
+  + startListening()
+  + stopListening()
+  - processCommand(String)
+}
+
+enum IllnessFilterType {
+  cataracts
+  glaucoma
+  macularDegeneration
+  tunnelVision
+}
+
+enum Panel {
+  left
+  right
+  full
+}
+
+MainViewModel --> Illness : manages
+MainViewModel --> IllnessSettings : configures
+MainViewModel --> SpeechRecognitionService : uses
+CameraViewModel --> CameraService : controls
+CIProcessor --> IllnessSettings : applies
+Illness --> IllnessFilterType : has type
+
+note right of MainViewModel
+  ViewModel principal que
+  gestiona el estado global
+  de la aplicación
+end note
+
+note right of CIProcessor
+  Procesa cada frame con
+  filtros Core Image según
+  la enfermedad seleccionada
+end note
+
+note left of SpeechRecognitionService
+  Reconoce comandos de voz
+  para control manos libres
+end note
+
+@enduml
