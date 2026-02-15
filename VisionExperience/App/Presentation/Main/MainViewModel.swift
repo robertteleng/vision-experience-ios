@@ -52,6 +52,10 @@ class MainViewModel: NSObject, ObservableObject {
     @Published var centralScotomaSettings: CentralScotomaSettings = .defaults
     @Published var hemianopsiaSettings: HemianopsiaSettings = .defaults
     
+    @Published var diabeticRetinopathySettings: DiabeticRetinopathySettings = .defaults
+    @Published var deuteranopiaSettings: DeuteranopiaSettings = .defaults
+    @Published var astigmatismSettings: AstigmatismSettings = .defaults
+
     // VR/Cardboard settings
     @Published var vrSettings: VRSettings = .defaults
 
@@ -78,11 +82,11 @@ class MainViewModel: NSObject, ObservableObject {
         case .hemianopsia:
             return .hemianopsia(hemianopsiaSettings)
         case .diabeticRetinopathy:
-            return .diabeticRetinopathy(cataractsSettings)
+            return .diabeticRetinopathy(diabeticRetinopathySettings)
         case .deuteranopia:
-            return .deuteranopia(cataractsSettings)
+            return .deuteranopia(deuteranopiaSettings)
         case .astigmatism:
-            return .astigmatism(cataractsSettings)
+            return .astigmatism(astigmatismSettings)
         }
     }
 

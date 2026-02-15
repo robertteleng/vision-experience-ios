@@ -21,6 +21,9 @@ struct CompactFiltersPanel: View {
     @Binding var hemianopsia: HemianopsiaSettings
     @Binding var blurryVision: BlurryVisionSettings
     @Binding var centralScotoma: CentralScotomaSettings
+    @Binding var diabeticRetinopathy: DiabeticRetinopathySettings
+    @Binding var deuteranopia: DeuteranopiaSettings
+    @Binding var astigmatism: AstigmatismSettings
 
     var width: CGFloat
     var sliderHeight: CGFloat
@@ -66,11 +69,11 @@ struct CompactFiltersPanel: View {
                         case .centralScotoma:
                             centralScotomaSection
                         case .diabeticRetinopathy:
-                            notImplementedSection(name: "Retinopatía diabética")
+                            diabeticRetinopathySection
                         case .deuteranopia:
-                            notImplementedSection(name: "Deuteranopia")
+                            deuteranopiaSection
                         case .astigmatism:
-                            notImplementedSection(name: "Astigmatismo")
+                            astigmatismSection
                         case .none:
                             Text("Selecciona una enfermedad para ajustar sus parámetros.")
                                 .font(.footnote)
@@ -184,12 +187,30 @@ struct CompactFiltersPanel: View {
         .padding(.top, 6)
     }
 
-    private func notImplementedSection(name: String) -> some View {
+    private var diabeticRetinopathySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(name).font(.subheadline).bold()
-            Text("Este filtro aún no tiene controles personalizados.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            Text("Retinopatía diabética").font(.subheadline).bold()
+            sliderRow(title: "Viñeta", value: $diabeticRetinopathy.vignetteIntensity, range: 0...2, format: "%.2f")
+            sliderRow(title: "Desenfoque", value: $diabeticRetinopathy.blurRadius, range: 0...15, format: "%.0f px")
+            sliderRow(title: "Manchas", value: $diabeticRetinopathy.speckleOpacity, range: 0...0.5, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var deuteranopiaSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Deuteranopia").font(.subheadline).bold()
+            sliderRow(title: "Intensidad", value: $deuteranopia.strength, range: 0...1, format: "%.2f")
+        }
+        .padding(.top, 6)
+    }
+
+    private var astigmatismSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Astigmatismo").font(.subheadline).bold()
+            sliderRow(title: "Desenfoque", value: $astigmatism.blurRadius, range: 0...20, format: "%.0f px")
+            sliderRow(title: "Ángulo", value: $astigmatism.angleDegrees, range: 0...180, format: "%.0f°")
+            sliderRow(title: "Imagen fantasma", value: $astigmatism.ghostAlpha, range: 0...0.6, format: "%.2f")
         }
         .padding(.top, 6)
     }

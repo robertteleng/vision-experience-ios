@@ -138,12 +138,51 @@ enum HemianopsiaSide: String, Codable, CaseIterable {
     case bottom
 }
 
+// MARK: - Diabetic Retinopathy Settings
+struct DiabeticRetinopathySettings: Codable, Equatable {
+    var vignetteIntensity: Double
+    var vignetteRadius: Double
+    var blurRadius: Double
+    var speckleOpacity: Double
+    var spotCount: Int
+
+    static let defaults = DiabeticRetinopathySettings(
+        vignetteIntensity: 0.8,
+        vignetteRadius: 1.2,
+        blurRadius: 4.0,
+        speckleOpacity: 0.15,
+        spotCount: 5
+    )
+}
+
+// MARK: - Deuteranopia Settings
+struct DeuteranopiaSettings: Codable, Equatable {
+    var strength: Double
+
+    static let defaults = DeuteranopiaSettings(
+        strength: 1.0
+    )
+}
+
+// MARK: - Astigmatism Settings
+struct AstigmatismSettings: Codable, Equatable {
+    var blurRadius: Double
+    var angleDegrees: Double
+    var ghostAlpha: Double
+
+    static let defaults = AstigmatismSettings(
+        blurRadius: 8.0,
+        angleDegrees: 30.0,
+        ghostAlpha: 0.3
+    )
+}
+
 // MARK: - Combined Symptoms Settings
 struct CombinedSymptomsSettings: Codable, Equatable {
-    var photophobia: Double // Light sensitivity
-    var floaters: Double // Eye floaters intensity
-    var halos: Double // Light halos around objects
-    
+    var photophobia: Double
+    var floaters: Double
+    var halos: Double
+
     static let defaults = CombinedSymptomsSettings(
         photophobia: 0.0,
         floaters: 0.0,

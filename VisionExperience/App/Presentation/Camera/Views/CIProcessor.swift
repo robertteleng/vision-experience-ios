@@ -234,27 +234,126 @@ final class CIProcessor {
             outputCI = composite.outputImage?.cropped(to: zoomed.extent) ?? zoomed
             
         case .blurryVision:
-            // TODO: Implement blurry vision effect
+            let s: BlurryVisionSettings = {
+                if case .blurryVision(let v) = settings { return v }
+                return .defaults
+            }()
             let blur = CIFilter.gaussianBlur()
             blur.inputImage = zoomed
-            blur.radius = Float(10.0 * clampedFocus)
-            outputCI = blur.outputImage?.clamped(to: zoomed.extent) ?? zoomed
-            
+            blur.radius = Float(s.blurAmount * clampedFocus)
+            let blurred = blur.outputImage?.clamped(to: zoomed.extent) ?? zoomed
+
+            let colorControls = CIFilter.colorControls()
+            colorControls.inputImage = blurred
+            colorControls.contrast = Float(1.0 - (1.0 - s.clarity) * 0.3 * clampedFocus)
+            colorControls.saturation = Float(1.0 - (1.0 - s.clarity) * 0.2 * clampedFocus)
+            outputCI = colorControls.outputImage ?? blurred
+
         case .centralScotoma:
-            // TODO: Implement central scotoma effect
-            outputCI = zoomed
-            
+            let s: CentralScotomaSettings = {
+                if case .centralScotoma(let v) = settings { return v }
+                return .defaults
+            }()
+            let minSide = min(zoomed.extent.width, zoomed.extent.height)
+            let scotomaRadius = minSide * CGFloat(s.scotomaRadius * clampedFocus)
+            let feather = CGFloat(s.edgeBlur * clampedFocus)
+
+            let radial = CIFilter.radialGradient()
+            radial.center = effectCenter
+            radial.radius0 = Float(scotomaRadius)
+            radial.radius1 = Float(scotomaRadius + feather)
+            radial.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(s.darkness))
+            radial.color1 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+            let spot = radial.outputImage?.cropped(to: zoomed.extent) ?? zoomed
+
+            let composite = CIFilter.sourceOverCompositing()
+            composite.inputImage = spot
+            composite.backgroundImage = zoomed
+            outputCI = composite.outputImage?.cropped(to: zoomed.extent) ?? zoomed
+
         case .diabeticRetinopathy:
-            // TODO: Implement diabetic retinopathy effect
-            outputCI = zoomed
-            
+            let s: DiabeticRetinopathySettings = {
+                if case .diabeticRetinopathy(let v) = settings { return v }
+                return .defaults
+            }()
+            let vignette = CIFilter.vignette()
+            vignette.inputImage = zoomed
+            vignette.intensity = Float(s.vignetteIntensity * clampedFocus)
+            vignette.radius = Float(s.vignetteRadius)
+            let vignetted = vignette.outputImage ?? zoomed
+
+            let blur = CIFilter.gaussianBlur()
+            blur.inputImage = vignetted
+            blur.radius = Float(s.blurRadius * clampedFocus * 0.5)
+            let blurred = blur.outputImage?.clamped(to: zoomed.extent) ?? vignetted
+
+            // Dark speckle spots simulating hemorrhages
+            var speckled = blurred
+            let spotRadius = min(zoomed.extent.width, zoomed.extent.height) * 0.03
+            for i in 0..<s.spotCount {
+                let angle = Double(i) * (2.0 * .pi / Double(s.spotCount))
+                let distance = min(zoomed.extent.width, zoomed.extent.height) * 0.15
+                let cx = zoomed.extent.midX + CGFloat(cos(angle)) * distance
+                let cy = zoomed.extent.midY + CGFloat(sin(angle)) * distance
+                let spotGrad = CIFilter.radialGradient()
+                spotGrad.center = CGPoint(x: cx, y: cy)
+                spotGrad.radius0 = 0
+                spotGrad.radius1 = Float(spotRadius)
+                spotGrad.color0 = CIColor(red: 0.2, green: 0, blue: 0, alpha: CGFloat(s.speckleOpacity * clampedFocus))
+                spotGrad.color1 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+                if let spotImage = spotGrad.outputImage?.cropped(to: zoomed.extent) {
+                    let comp = CIFilter.sourceOverCompositing()
+                    comp.inputImage = spotImage
+                    comp.backgroundImage = speckled
+                    speckled = comp.outputImage?.cropped(to: zoomed.extent) ?? speckled
+                }
+            }
+            outputCI = speckled
+
         case .deuteranopia:
-            // TODO: Implement deuteranopia (color blindness) effect
-            outputCI = zoomed
-            
+            let s: DeuteranopiaSettings = {
+                if case .deuteranopia(let v) = settings { return v }
+                return .defaults
+            }()
+            let strength = s.strength * clampedFocus
+            let inv = 1.0 - strength
+            // Deuteranopia simulation matrix (reduced green perception)
+            let colorMatrix = CIFilter.colorMatrix()
+            colorMatrix.inputImage = zoomed
+            colorMatrix.rVector = CIVector(x: inv + strength * 0.625, y: strength * 0.375, z: 0, w: 0)
+            colorMatrix.gVector = CIVector(x: strength * 0.7, y: inv + strength * 0.3, z: 0, w: 0)
+            colorMatrix.bVector = CIVector(x: 0, y: strength * 0.3, z: inv + strength * 0.7, w: 0)
+            colorMatrix.aVector = CIVector(x: 0, y: 0, z: 0, w: 1)
+            outputCI = colorMatrix.outputImage ?? zoomed
+
         case .astigmatism:
-            // TODO: Implement astigmatism effect
-            outputCI = zoomed
+            let s: AstigmatismSettings = {
+                if case .astigmatism(let v) = settings { return v }
+                return .defaults
+            }()
+            let angleRad = s.angleDegrees * .pi / 180.0
+            let dx = CGFloat(cos(angleRad)) * CGFloat(s.blurRadius * clampedFocus)
+            let dy = CGFloat(sin(angleRad)) * CGFloat(s.blurRadius * clampedFocus)
+
+            // Directional motion blur via offset ghost compositing
+            let shifted = zoomed.transformed(by: CGAffineTransform(translationX: dx, y: dy))
+            let ghostAlpha = CGFloat(s.ghostAlpha * clampedFocus)
+
+            let ghostColor = CIFilter.colorMatrix()
+            ghostColor.inputImage = shifted
+            ghostColor.aVector = CIVector(x: 0, y: 0, z: 0, w: ghostAlpha)
+            let ghost = ghostColor.outputImage?.cropped(to: zoomed.extent) ?? zoomed
+
+            let comp = CIFilter.sourceOverCompositing()
+            comp.inputImage = ghost
+            comp.backgroundImage = zoomed
+            let combined = comp.outputImage?.cropped(to: zoomed.extent) ?? zoomed
+
+            // Slight overall blur for the "unfocused" feel
+            let blur = CIFilter.gaussianBlur()
+            blur.inputImage = combined
+            blur.radius = Float(s.blurRadius * clampedFocus * 0.3)
+            outputCI = blur.outputImage?.clamped(to: zoomed.extent) ?? combined
         }
 
         return context.createCGImage(outputCI, from: inputCI.extent) ?? image

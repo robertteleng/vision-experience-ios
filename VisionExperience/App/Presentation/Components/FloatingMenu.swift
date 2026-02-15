@@ -143,6 +143,9 @@ struct FloatingMenu: View {
                     hemianopsia: $mainViewModel.hemianopsiaSettings,
                     blurryVision: $mainViewModel.blurryVisionSettings,
                     centralScotoma: $mainViewModel.centralScotomaSettings,
+                    diabeticRetinopathy: $mainViewModel.diabeticRetinopathySettings,
+                    deuteranopia: $mainViewModel.deuteranopiaSettings,
+                    astigmatism: $mainViewModel.astigmatismSettings,
                     width: sliderWidth,
                     sliderHeight: sliderHeight
                 )

@@ -15,7 +15,7 @@ enum IllnessSettings: Equatable, Codable {
     case hemianopsia(HemianopsiaSettings)
     case blurryVision(BlurryVisionSettings)
     case centralScotoma(CentralScotomaSettings)
-    case diabeticRetinopathy(CataractsSettings) // Reutilizamos cataracts por ahora
-    case deuteranopia(CataractsSettings) // Reutilizamos cataracts por ahora
-    case astigmatism(CataractsSettings) // Reutilizamos cataracts por ahora
+    case diabeticRetinopathy(DiabeticRetinopathySettings)
+    case deuteranopia(DeuteranopiaSettings)
+    case astigmatism(AstigmatismSettings)
 }
