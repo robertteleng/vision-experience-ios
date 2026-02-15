@@ -86,28 +86,29 @@ VisionExperience sigue una arquitectura **MVVM (Model-View-ViewModel)** con inye
 
 ```mermaid
 graph TB
-    subgraph "Presentation Layer"
+    subgraph Presentation["Presentation Layer"]
         V[Views<br/>SwiftUI]
         VM[ViewModels<br/>ObservableObject]
-        R[Router<br/>Navigation]
+        R[AppRouter<br/>Navigation]
     end
-    
-    subgraph "Domain Layer"
+
+    subgraph Domain["Domain Layer"]
         M[Models<br/>Illness, FilterSettings]
         E[Enums<br/>IllnessFilterType]
     end
-    
-    subgraph "Service Layer"
+
+    subgraph Services["Service Layer"]
         CS[CameraService<br/>AVFoundation]
         SS[SpeechService<br/>Speech Framework]
+        SA[SpatialAudio<br/>AVAudioEngine]
         IP[CIProcessor<br/>Core Image]
     end
-    
-    subgraph "Utils"
+
+    subgraph Utils["Utils"]
         DO[DeviceOrientation<br/>Observer]
-        EX[Extensions]
+        HT[HeadTracking<br/>CoreMotion]
     end
-    
+
     V --> VM
     VM --> M
     VM --> CS
@@ -116,13 +117,19 @@ graph TB
     CS --> IP
     VM --> DO
     IP --> M
-    
-    style V fill:#4A90E2
-    style VM fill:#7B68EE
-    style M fill:#50C878
-    style CS fill:#FF6B6B
-    style SS fill:#FFA500
-    style IP fill:#9370DB
+    SA --> HT
+
+    style V fill:#007AFF,color:white
+    style VM fill:#5856D6,color:white
+    style R fill:#34C759,color:white
+    style M fill:#32D583,color:white
+    style E fill:#30D158,color:white
+    style CS fill:#FF3B30,color:white
+    style SS fill:#FF9500,color:white
+    style SA fill:#AF52DE,color:white
+    style IP fill:#FF2D55,color:white
+    style DO fill:#8E8E93,color:white
+    style HT fill:#8E8E93,color:white
 ```
 
 ### Capas de la Arquitectura
@@ -153,33 +160,31 @@ graph TB
 
 ```mermaid
 flowchart TD
-    Start([App Launch]) --> Splash[SplashView<br/>Animación Lottie]
-    Splash -->|2 segundos| Home[HomeView<br/>Menú Principal]
-    
-    Home -->|Illness Button| IllList[IllnessListView<br/>Selección de Enfermedad]
-    Home -->|Immersive Button| Immersive[ImmersiveVideoView<br/>Video 360°]
-    
-    IllList -->|Seleccionar Enfermedad| Camera[CameraView<br/>Simulación en Vivo]
-    IllList -->|Toggle VR| CardboardMode{Modo Cardboard}
-    
-    Camera -->|Normal Mode| NormalView[Vista Completa<br/>CameraImageView]
-    Camera -->|Cardboard Mode| StereoView[Vista Estereoscópica<br/>Panel Izq + Der]
-    
-    CardboardMode -->|Activado| StereoView
-    CardboardMode -->|Desactivado| NormalView
-    
-    NormalView --> FloatingMenu[FloatingMenu<br/>Controles]
-    StereoView --> VoiceControl[Control por Voz<br/>Comandos]
-    
+    Start([App Launch]) --> Splash[SplashView<br/>Lottie Animation]
+    Splash -->|2 seconds| Home[HomeView<br/>Main Menu]
+
+    Home -->|Illness| IllList[IllnessListView<br/>Disease Selector]
+    Home -->|Immersive| Immersive[ImmersiveVideoView<br/>360° Video]
+
+    IllList -->|Select Disease| Camera[CameraView<br/>Live Simulation]
+
+    Camera -->|Normal Mode| NormalView[Full Screen<br/>CameraImageView]
+    Camera -->|Cardboard Mode| StereoView[Stereoscopic<br/>Left + Right Panel]
+
+    NormalView --> FloatingMenu[FloatingMenu<br/>Controls]
+    StereoView --> VoiceControl[Voice Control<br/>Commands]
+
     FloatingMenu -->|Back| IllList
     VoiceControl -->|Exit| IllList
-    
-    style Start fill:#4A90E2
-    style Splash fill:#9370DB
-    style Home fill:#50C878
-    style Camera fill:#FF6B6B
-    style StereoView fill:#FFA500
-    style NormalView fill:#4EC9B0
+
+    style Start fill:#007AFF,color:white
+    style Splash fill:#AF52DE,color:white
+    style Home fill:#34C759,color:white
+    style IllList fill:#5856D6,color:white
+    style Camera fill:#FF3B30,color:white
+    style StereoView fill:#FF9500,color:white
+    style NormalView fill:#32D583,color:white
+    style Immersive fill:#FF2D55,color:white
 ```
 
 ### Estados del Router
@@ -288,10 +293,7 @@ VisionExperience/
 │   │   └── logo-umh.imageset/
 │   └── Brand/
 │
-└── Docs/                               # Documentación
-    ├── architecture_diagram.md
-    ├── voice_commands_guide.md
-    └── Architecture.png
+└── LICENSE
 ```
 
 ---
@@ -305,12 +307,12 @@ flowchart LR
     A[Camera Frame<br/>CGImage] --> B[CameraService]
     B --> C[CameraViewModel]
     C --> D{Filter Enabled?}
-    
+
     D -->|Yes| E[CIProcessor]
     D -->|No| F[Original Frame]
-    
+
     E --> G{Illness Type}
-    
+
     G -->|Cataracts| H1[Gaussian Blur<br/>+ Contrast ↓<br/>+ Yellow Tint]
     G -->|Glaucoma| H2[Vignette Effect<br/>+ Peripheral Darkening]
     G -->|Macular| H3[Central Blur<br/>+ Dark Spot<br/>+ Twirl Distortion]
@@ -319,7 +321,7 @@ flowchart LR
     G -->|Retinopathy| H6[Blood Vessels<br/>+ Spots]
     G -->|ColorBlindness| H7[Color Matrix<br/>Transform]
     G -->|Astigmatism| H8[Motion Blur<br/>Directional]
-    
+
     H1 --> I[Processed Frame]
     H2 --> I
     H3 --> I
@@ -329,13 +331,14 @@ flowchart LR
     H7 --> I
     H8 --> I
     F --> I
-    
+
     I --> J[CameraImageView<br/>Display]
-    
-    style A fill:#4A90E2
-    style E fill:#9370DB
-    style I fill:#50C878
-    style J fill:#FF6B6B
+
+    style A fill:#007AFF,color:white
+    style E fill:#AF52DE,color:white
+    style I fill:#34C759,color:white
+    style J fill:#FF3B30,color:white
+    style G fill:#5856D6,color:white
 ```
 
 ### Configuración por Enfermedad
@@ -499,8 +502,8 @@ sequenceDiagram
 
 ### Requisitos Previos
 
-- **Xcode**: 15.0 o superior
-- **iOS**: 16.0 o superior
+- **Xcode**: 16.0 o superior
+- **iOS**: 18.0 o superior
 - **Swift**: 5.9 o superior
 - **Dispositivo**: iPhone/iPad con cámara
 
@@ -517,7 +520,7 @@ dependencies: [
 
 1. **Clonar el repositorio**
 ```bash
-git clone https://github.com/tu-org/VisionExperience.git
+git clone https://github.com/robertteleng/vision-experience-ios.git
 cd VisionExperience
 ```
 
@@ -571,15 +574,15 @@ xcodebuild -project VisionExperience.xcodeproj \
 
 ```mermaid
 flowchart TD
-    A[1. Definir Settings] --> B[2. Añadir a IllnessFilterType]
-    B --> C[3. Implementar en CIProcessor]
-    C --> D[4. Crear Illness en lista]
-    D --> E[5. Añadir panel de ajustes]
-    E --> F[6. Agregar comandos de voz]
-    
-    style A fill:#4A90E2
-    style C fill:#FF6B6B
-    style F fill:#50C878
+    A[1. Define Settings] --> B[2. Add to IllnessFilterType]
+    B --> C[3. Implement in CIProcessor]
+    C --> D[4. Create Illness in list]
+    D --> E[5. Add tuning panel]
+    E --> F[6. Add voice commands]
+
+    style A fill:#007AFF,color:white
+    style C fill:#FF3B30,color:white
+    style F fill:#34C759,color:white
 ```
 
 #### 1️⃣ Definir Settings en `FilterSettings.swift`
@@ -708,52 +711,56 @@ private func setupSpeechRecognitionBinding() {
 
 ```mermaid
 graph LR
-    subgraph App["VisionExperience.swift"]
-        Entry[App Entry Point]
+    subgraph App["VisionExperienceApp.swift"]
+        Entry[Entry Point]
     end
-    
-    subgraph Injection["Dependency Injection"]
+
+    subgraph Coordinator["AppCoordinator"]
         R[AppRouter]
         MVM[MainViewModel]
-        TVM[FilterTuningViewModel]
-        DO[DeviceOrientationObserver]
+        SVM[SpeechViewModel]
+        DO[OrientationObserver]
     end
-    
+
     subgraph Views["View Layer"]
         MV[MainView]
         SV[SplashView]
         IL[IllnessListView]
         CV[CameraView]
+        IV[ImmersiveVideoView]
     end
-    
+
     subgraph Services["Service Layer"]
         CS[CameraService]
         SS[SpeechService]
+        SA[SpatialAudioService]
         CI[CIProcessor]
     end
-    
+
     Entry -->|environmentObject| R
     Entry -->|environmentObject| MVM
-    Entry -->|environmentObject| TVM
+    Entry -->|environmentObject| SVM
     Entry -->|environmentObject| DO
-    
+
     R --> MV
     MVM --> MV
-    DO --> MV
-    
+
     MV --> SV
     MV --> IL
     MV --> CV
-    
+    MV --> IV
+
     CV -->|StateObject| CVM[CameraViewModel]
     CVM --> CS
     CS --> CI
     MVM --> SS
-    
-    style Entry fill:#4A90E2
-    style MVM fill:#7B68EE
-    style CS fill:#FF6B6B
-    style CI fill:#9370DB
+    IV --> SA
+
+    style Entry fill:#007AFF,color:white
+    style MVM fill:#5856D6,color:white
+    style CS fill:#FF3B30,color:white
+    style CI fill:#AF52DE,color:white
+    style SA fill:#FF2D55,color:white
 ```
 
 ### Testing
