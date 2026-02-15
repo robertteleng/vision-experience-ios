@@ -1,4 +1,4 @@
-# 📚 visionApp - Índice de Documentación
+# 📚 VisionExperience - Índice de Documentación
 
 > **Nota para Xcode**: Los diagramas Mermaid solo se renderizan en GitHub/GitLab.
 > En Xcode verás el código fuente. Para visualizaciones rápidas en Xcode, ver secciones ASCII más abajo.
@@ -31,7 +31,7 @@
 - Diagramas simplificados para consulta rápida
 - **12 diagramas Mermaid** (se ven en GitHub)
 
-### 📁 [visionApp/Docs/](visionApp/Docs/)
+### 📁 [VisionExperience/Docs/](VisionExperience/Docs/)
 **Documentación legacy y recursos**
 - `architecture_diagram.md` - Arquitectura en ASCII
 - `voice_commands_guide.md` - Guía de comandos de voz
@@ -46,7 +46,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    visionApp Architecture                    │
+│                    VisionExperience Architecture                    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -241,7 +241,7 @@ CGImage Input
 
 ```
 ┌─────────────────────────────────────┐
-│        visionApp.swift              │
+│        VisionExperience.swift              │
 │           @main                     │
 └───────────┬─────────────────────────┘
             │
@@ -319,7 +319,7 @@ Los diagramas Mermaid se renderizan automáticamente:
 ### En Xcode
 - Los diagramas Mermaid aparecen como código fuente
 - Usa las visualizaciones ASCII de este archivo
-- O consulta `visionApp/Docs/Architecture.png`
+- O consulta `VisionExperience/Docs/Architecture.png`
 
 ### En Otros Editores
 - **VSCode**: Instalar extensión "Markdown Preview Mermaid Support"

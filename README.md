@@ -1,4 +1,4 @@
-# 👁️ visionApp
+# 👁️ VisionExperience
 
 > **Aplicación iOS para simular enfermedades visuales en tiempo real con realidad inmersiva**
 
@@ -26,7 +26,7 @@
 
 ## 🎯 Descripción General
 
-**visionApp** es una aplicación iOS educativa desarrollada en SwiftUI que permite simular diversas enfermedades visuales mediante filtros aplicados en tiempo real sobre la imagen de la cámara del dispositivo. 
+**VisionExperience** es una aplicación iOS educativa desarrollada en SwiftUI que permite simular diversas enfermedades visuales mediante filtros aplicados en tiempo real sobre la imagen de la cámara del dispositivo. 
 
 La aplicación está diseñada para:
 - **Educación médica**: Ayudar a estudiantes y profesionales a comprender cómo ven personas con diferentes condiciones visuales
@@ -82,7 +82,7 @@ La aplicación está diseñada para:
 
 ## 🏗️ Arquitectura
 
-visionApp sigue una arquitectura **MVVM (Model-View-ViewModel)** con inyección de dependencias y servicios desacoplados.
+VisionExperience sigue una arquitectura **MVVM (Model-View-ViewModel)** con inyección de dependencias y servicios desacoplados.
 
 ```mermaid
 graph TB
@@ -216,9 +216,9 @@ stateDiagram-v2
 ## 🗂️ Estructura del Proyecto
 
 ```
-visionApp/
+VisionExperience/
 ├── App/
-│   ├── visionApp.swift                 # Entry point (main)
+│   ├── VisionExperience.swift                 # Entry point (main)
 │   │
 │   ├── Domain/                         # Modelos y lógica de negocio
 │   │   ├── FilterSettings.swift        # Configuración de filtros por enfermedad
@@ -517,15 +517,15 @@ dependencies: [
 
 1. **Clonar el repositorio**
 ```bash
-git clone https://github.com/tu-org/visionApp.git
-cd visionApp
+git clone https://github.com/tu-org/VisionExperience.git
+cd VisionExperience
 ```
 
 2. **Abrir el proyecto**
 ```bash
-open visionApp.xcodeproj
+open VisionExperience.xcodeproj
 # O si usas workspace:
-open visionApp.xcworkspace
+open VisionExperience.xcworkspace
 ```
 
 3. **Configurar permisos en Info.plist**
@@ -533,20 +533,20 @@ open visionApp.xcworkspace
 El proyecto ya incluye las siguientes claves:
 ```xml
 <key>NSCameraUsageDescription</key>
-<string>visionApp necesita acceso a la cámara para simular enfermedades visuales</string>
+<string>VisionExperience necesita acceso a la cámara para simular enfermedades visuales</string>
 
 <key>NSMicrophoneUsageDescription</key>
-<string>visionApp necesita acceso al micrófono para comandos de voz</string>
+<string>VisionExperience necesita acceso al micrófono para comandos de voz</string>
 
 <key>NSSpeechRecognitionUsageDescription</key>
-<string>visionApp necesita acceso al reconocimiento de voz para control por comandos</string>
+<string>VisionExperience necesita acceso al reconocimiento de voz para control por comandos</string>
 ```
 
 4. **Compilar y ejecutar**
 ```bash
 # Desde terminal:
-xcodebuild -project visionApp.xcodeproj \
-  -scheme visionApp \
+xcodebuild -project VisionExperience.xcodeproj \
+  -scheme VisionExperience \
   -configuration Debug \
   -sdk iphonesimulator \
   build
@@ -557,8 +557,8 @@ xcodebuild -project visionApp.xcodeproj \
 
 ### Configuración de Signing
 
-1. Abrir `visionApp.xcodeproj`
-2. Seleccionar el target **visionApp**
+1. Abrir `VisionExperience.xcodeproj`
+2. Seleccionar el target **VisionExperience**
 3. En **Signing & Capabilities**:
    - Seleccionar tu equipo de desarrollo
    - Ajustar el Bundle Identifier si es necesario
@@ -708,7 +708,7 @@ private func setupSpeechRecognitionBinding() {
 
 ```mermaid
 graph LR
-    subgraph App["visionApp.swift"]
+    subgraph App["VisionExperience.swift"]
         Entry[App Entry Point]
     end
     
@@ -761,16 +761,16 @@ graph LR
 ```bash
 # Ejecutar tests unitarios
 xcodebuild test \
-  -project visionApp.xcodeproj \
-  -scheme visionApp \
+  -project VisionExperience.xcodeproj \
+  -scheme VisionExperience \
   -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 
 # Ejecutar tests UI
 xcodebuild test \
-  -project visionApp.xcodeproj \
-  -scheme visionApp \
+  -project VisionExperience.xcodeproj \
+  -scheme VisionExperience \
   -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
-  -only-testing:visionAppUITests
+  -only-testing:VisionExperienceUITests
 ```
 
 ### Debugging
@@ -808,10 +808,10 @@ recognitionTask = recognizer.recognitionTask(with: request) { result, error in
 
 ### Archivos de Documentación
 
-- 📖 [Arquitectura Detallada](visionApp/Docs/architecture_diagram.md)
-- 🎤 [Guía de Comandos de Voz](visionApp/Docs/voice_commands_guide.md)
-- 🖼️ [Diagrama de Arquitectura PNG](visionApp/Docs/Architecture.png)
-- 📐 [Diagrama PlantUML](visionApp/Docs/architecture.puml)
+- 📖 [Arquitectura Detallada](VisionExperience/Docs/architecture_diagram.md)
+- 🎤 [Guía de Comandos de Voz](VisionExperience/Docs/voice_commands_guide.md)
+- 🖼️ [Diagrama de Arquitectura PNG](VisionExperience/Docs/Architecture.png)
+- 📐 [Diagrama PlantUML](VisionExperience/Docs/architecture.puml)
 
 ### Recursos Externos
 

@@ -1,4 +1,4 @@
-# 🏗️ visionApp - Arquitectura Técnica Detallada
+# 🏗️ VisionExperience - Arquitectura Técnica Detallada
 
 > Documentación técnica completa de la arquitectura, patrones de diseño y flujos de datos
 
@@ -125,7 +125,7 @@ graph LR
 
 ```mermaid
 graph TD
-    App[visionApp.swift<br/>@main] --> Main[MainView<br/>NavigationView]
+    App[VisionExperience.swift<br/>@main] --> Main[MainView<br/>NavigationView]
     
     Main --> Router{AppRouter<br/>currentRoute}
     
@@ -764,7 +764,7 @@ classDiagram
 
 ```mermaid
 graph TD
-    App[visionApp.swift] -->|inject| E1[@EnvironmentObject router]
+    App[VisionExperience.swift] -->|inject| E1[@EnvironmentObject router]
     App -->|inject| E2[@EnvironmentObject mainViewModel]
     App -->|inject| E3[@EnvironmentObject orientationObserver]
     App -->|inject| E4[@EnvironmentObject filterTuningVM]
@@ -966,7 +966,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant System as iOS System
-    participant App as visionApp
+    participant App as VisionExperience
     participant Router as AppRouter
     participant VM as MainViewModel
     participant Camera as CameraService
@@ -1019,7 +1019,7 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Strong References"
-        App[visionApp] --> Router[AppRouter]
+        App[VisionExperience] --> Router[AppRouter]
         App --> MainVM[MainViewModel]
         MainVM --> SpeechService[SpeechRecognitionService]
     end

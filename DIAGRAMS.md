@@ -1,4 +1,4 @@
-# 📊 visionApp - Diagramas Rápidos
+# 📊 VisionExperience - Diagramas Rápidos
 
 > Visualización rápida de todos los diagramas de arquitectura y flujos
 
@@ -111,7 +111,7 @@ graph LR
 
 ```mermaid
 graph TD
-    App[visionApp] -->|environmentObject| Router
+    App[VisionExperience] -->|environmentObject| Router
     App -->|environmentObject| MainVM
     App -->|environmentObject| Orientation
     Router --> AllViews[All Views]
